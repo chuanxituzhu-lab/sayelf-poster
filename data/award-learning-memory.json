@@ -1,0 +1,320 @@
+{
+  "memoryVersion": "0.5",
+  "curatedAt": "2026-08-11",
+  "scope": "从国际与中国权威广告奖项的公开获奖档案中提炼可迁移的创意机制，并把海外主流平台的可核验发布规则纳入生成与递归评估；不复制具体作品的构图、文案、角色、商标或识别性视觉元素。",
+  "policy": {
+    "learnFrom": ["官方获奖档案", "官方评审趋势", "官方奖项规则", "官方案例说明"],
+    "store": ["来源与作品元数据", "可迁移机制", "适用信号", "质量门槛", "可验证观察"],
+    "doNotStore": ["整张获奖作品", "可识别的品牌资产复刻", "原文案照搬", "未经核实的行业传闻"],
+    "upgradeMode": "先提炼机制，再用用户任务与图像特征匹配；每次升级保留来源、观察、迁移规则和验证状态。"
+  },
+  "platformRules": [
+    {
+      "id": "xhs_cover",
+      "platform": "小红书",
+      "ruleStatus": "official-behavior-rules-plus-internal-format-preset",
+      "officialUrls": [
+        "https://creator.xiaohongshu.com/",
+        "https://pgy.xiaohongshu.com/help/detail?id=6495c527d1eedeeb48fb18b1f875650e",
+        "https://ad.xiaohongshu.com/next_help/docs/8dc5bd9c45c9a90cb9912f3400d43f92"
+      ],
+      "format": {"ratio": "3:4", "width": 900, "height": 1200, "verified": false, "note": "平台公开规则更强调内容审核与展示效果，未在公开创作者入口找到统一像素硬门槛；3:4 是本系统的稳定运营预设。"},
+      "hardRules": ["封面与正文/标题必须相关，不得诱骗点击", "不得盗用他人图片或带其他平台水印", "文字应清晰、规范，不使用误导性绝对化表达", "涉及品牌、人物、IP和广告资质时必须有授权或证明"],
+      "attentionRules": ["单一主体", "短标题优先", "缩略图先读标题再读画面", "用具体场景或结果形成点击理由"]
+    },
+    {
+      "id": "wechat_header",
+      "platform": "微信公众号",
+      "ruleStatus": "operational-preset-not-currently-officially-verified",
+      "officialUrls": ["https://mp.weixin.qq.com/"],
+      "format": {"ratio": "2.35:1", "width": 900, "height": 383, "verified": false, "note": "900×383 是广泛使用的头条封面运营预设；系统不把它宣称为当前公众号官方硬性尺寸，发布前以编辑器实际裁切预览为准。"},
+      "hardRules": ["标题在窄横幅与小尺寸消息列表中仍需可读", "主体和标题避开两侧可能被裁切区域", "封面主张必须与文章内容一致"],
+      "attentionRules": ["中心安全区", "一个主标题", "高对比主体", "用数字、冲突或明确收益制造阅读入口"]
+    },
+    {
+      "id": "douyin_cover",
+      "platform": "抖音",
+      "ruleStatus": "official-share-constraints-plus-vertical-preset",
+      "officialUrls": [
+        "https://open.douyin.com/platform/resource/docs/develop/share/ios",
+        "https://open.douyin.com/platform/resource/docs/ability/content-management/douyin-publish-solution"
+      ],
+      "format": {"ratio": "9:16", "width": 1080, "height": 1920, "verified": true, "note": "官方分享文档给出图片宽高比范围 1/2.2 至 2.2；9:16 是短视频竖屏封面的适配预设。"},
+      "hardRules": ["图片比例必须在官方支持范围内", "不得带品牌logo或平台外水印", "审核逻辑与抖音端内发布一致", "话题和导流表达需符合平台审核"],
+      "attentionRules": ["三秒理解主题", "标题不超过两行", "主体放在视觉中心并留出界面遮挡安全区", "动作、结果或反差优先"]
+    },
+    {
+      "id": "instagram_feed",
+      "platform": "Instagram Feed",
+      "ruleStatus": "operational-preset-not-currently-officially-verified",
+      "officialUrls": ["https://help.instagram.com/1631821640426723"],
+      "format": {"ratio": "4:5", "width": 1080, "height": 1350, "verified": false, "note": "系统采用 4:5 作为移动端 Feed 的运营预设；Instagram 公开帮助入口当前无法稳定读取统一的当前硬性像素门槛，发布前以平台预览为准。"},
+      "hardRules": ["画面与标题内容一致", "不得使用未经授权的素材或其他平台水印", "避免误导性、仇恨、危险或违规内容"],
+      "attentionRules": ["第一屏读懂主题", "短英文标题", "单一主体", "视觉焦点避开裁切边缘"]
+    },
+    {
+      "id": "instagram_story",
+      "platform": "Instagram Story / Reel",
+      "ruleStatus": "operational-preset-not-currently-officially-verified",
+      "officialUrls": ["https://help.instagram.com/270447560766967"],
+      "format": {"ratio": "9:16", "width": 1080, "height": 1920, "verified": false, "note": "系统采用 9:16 全屏竖幅运营预设；重要文字必须避开上下界面安全区，发布前以平台预览为准。"},
+      "hardRules": ["不得遮挡平台界面关键区域", "不得使用未经授权的素材、品牌或人物", "内容必须遵循平台社区准则"],
+      "attentionRules": ["两秒理解主题", "大字号短句", "上下安全区", "动作或结果优先"]
+    },
+    {
+      "id": "youtube_thumbnail",
+      "platform": "YouTube",
+      "ruleStatus": "official-platform-spec",
+      "officialUrls": ["https://support.google.com/youtube/answer/72431"],
+      "format": {"ratio": "16:9", "width": 1280, "height": 720, "verified": true, "note": "YouTube 官方建议使用 16:9；官方帮助页同时说明缩略图分辨率、文件大小和社区准则要求。"},
+      "hardRules": ["遵循 YouTube 社区准则", "不得使用色情、仇恨、暴力或危险内容", "缩略图必须与视频内容一致"],
+      "attentionRules": ["缩略图在小尺寸下可读", "一个主角或主体", "短英文标题", "高对比和明确情绪"]
+    },
+    {
+      "id": "tiktok_cover",
+      "platform": "TikTok",
+      "ruleStatus": "official-ad-constraints-plus-vertical-preset",
+      "officialUrls": ["https://ads.us.tiktok.com/help/article/tiktok-ads-policy-ad-format-and-functionality?lang=en", "https://business-api.tiktok.com/gateway/docs/index"],
+      "format": {"ratio": "9:16", "width": 1080, "height": 1920, "verified": true, "note": "TikTok 官方广告资料明确支持 9:16 竖屏；封面设计仍需按具体内容类型与端内预览复核。"},
+      "hardRules": ["广告素材需清晰可读并遵守广告政策", "不得用静态图像冒充动态广告主体", "不得使用误导性导流表达"],
+      "attentionRules": ["首帧快速说明主题", "英文标题不超过两行", "主体留出 UI 安全区", "动作、结果或反差优先"]
+    },
+    {
+      "id": "linkedin_post",
+      "platform": "LinkedIn",
+      "ruleStatus": "official-platform-spec",
+      "officialUrls": ["https://www.linkedin.com/help/linkedin/answer/a527229/share-photos-or-videos?lang=en", "https://www.linkedin.com/help/linkedin/answer/a521928/making-your-website-shareable-on-linkedin?lang=en"],
+      "format": {"ratio": "1.91:1", "width": 1200, "height": 627, "verified": true, "note": "LinkedIn 官方帮助页给出 1.91:1 / 1200×627 的分享图建议，并说明图片大小和裁切范围。"},
+      "hardRules": ["图片与专业内容一致", "遵守平台职业社区规则", "不得使用未经授权的品牌、人物或数据"],
+      "attentionRules": ["观点先行", "数据或结果明确", "适合横向消息流阅读", "保留专业可信度"]
+    },
+    {
+      "id": "pinterest_pin",
+      "platform": "Pinterest",
+      "ruleStatus": "official-platform-spec",
+      "officialUrls": ["https://help.pinterest.com/en/business/article/pin-performance-and-distribution", "https://help.pinterest.com/en/business/article/pinterest-product-specs"],
+      "format": {"ratio": "2:3", "width": 1000, "height": 1500, "verified": true, "note": "Pinterest 官方资料建议图片 Pin 使用 2:3，并强调高质量、可保存和安全区。"},
+      "hardRules": ["使用高质量图片", "避免模糊、变形和未经授权的素材", "文字与链接/主题保持一致"],
+      "attentionRules": ["垂直长图优先", "可保存的主题表达", "短英文标题", "明确动作或灵感入口"]
+    },
+    {
+      "id": "video_cover",
+      "platform": "通用横版视频",
+      "ruleStatus": "internal-cross-platform-preset",
+      "officialUrls": [],
+      "format": {"ratio": "16:9", "width": 1280, "height": 720, "verified": false, "note": "用于没有指定平台时的横版视频封面，不代表某个平台的独占官方规范。"},
+      "hardRules": ["标题和主体在小尺寸预览中保持清晰", "不使用未授权素材和水印"],
+      "attentionRules": ["三秒理解主题", "主体与标题形成强对比", "避免信息堆叠"]
+    },
+    {
+      "id": "poster",
+      "platform": "活动海报",
+      "ruleStatus": "award-and-ad-compliance-profile",
+      "officialUrls": ["https://www.china-caa.org/cnaa/staticview/jiangxiang1"],
+      "format": {"ratio": "3:4", "width": 900, "height": 1200, "verified": true, "note": "这是本系统的活动海报画布，不对应单一自媒体平台。"},
+      "hardRules": ["活动对象、时间或行动入口清楚", "原创、版权、广告法与公众品味检查通过"],
+      "attentionRules": ["一句主张", "清晰行动入口", "主视觉先制造情绪，再补充信息"]
+    }
+  ],
+  "distillationLoop": [
+    "读：收集官方获奖档案、评审趋势、平台规则和可验证案例说明。",
+    "拆：分离中心概念、视觉隐喻、标题工艺、图像处理、媒介动作、用户影响和合规边界。",
+    "交叉验证：同一机制至少在两个来源或两个主题中出现，才进入候选记忆。",
+    "创新：保留机制关系，替换品牌、对象、文化语境、图像和文案，生成新的表达。",
+    "测试：用平台缩略图、硬规则、吸睛度、发布分和人工修改次数验证。",
+    "沉淀：记录来源、机制、反例、平台适配和回归结果，再调整权重。"
+  ],
+  "typographyModel": {
+    "name": "Type Fit v0.5",
+    "principle": "字体不是装饰层；它要同时承担概念、阅读路径、平台适配和视觉情绪。",
+    "gates": ["标题两行内或明确可控", "文字对比达到可读门槛", "字距与行距不破坏阅读", "重要文字位于平台安全区", "英文与中文分别使用合适的字形系统"],
+    "scoreScale": "0-100",
+    "notAGuarantee": true
+  },
+  "attentionModel": {
+    "name": "平台适配吸睛度",
+    "scale": "0-10",
+    "notAGuarantee": true,
+    "signals": ["标题长度", "信息单一性", "视觉对比", "主体聚焦", "具体结果/冲突/数字", "平台安全区", "内容一致性"],
+    "rule": "吸睛分用于筛选缩略图第一眼注意力，不等同于爆款保证；最终传播仍受内容价值、账号关系、发布时间和平台分发影响。"
+  },
+  "awardFramework": {
+    "modelVersion": "award-bridge-v0.5",
+    "international": {"name": "国际广告奖项启发式对标", "focus": ["概念原创", "文案工艺", "艺术指导与执行", "媒介即创意", "人文影响", "可复述的差异"]},
+    "china": {"name": "中国广告奖项启发式对标", "focus": ["创意质量", "传播效果", "本土语境", "技术与场景创新", "社会责任", "原创与合规"]},
+    "typography": {"name": "字体与排版工艺", "focus": ["字形与创意概念的关系", "层级与阅读路径", "字距、行距与密度", "文字颜色与画面对比", "平台缩略图可读性", "语言与文化语境"], "sources": ["D&AD Typography", "D&AD Graphic Design", "D&AD Writing for Advertising", "中国广告长城奖创意与制作标准"]},
+    "innovation": {"name": "递归创新指数", "rule": "只有在保留可迁移机制关系的同时替换对象、语境、图像、文案和排版逻辑，并通过平台与合规门槛，才计入创新信号。"},
+    "disclaimer": "对标结果用于内部筛选和学习，不等同于真实评委评分或获奖承诺。"
+  },
+  "sources": [
+    {
+      "id": "dandad-2025",
+      "authority": "D&AD",
+      "region": "international",
+      "type": "award archive and jury insights",
+      "officialUrls": [
+        "https://www.dandad.org/work/annual",
+        "https://www.dandad.org/work",
+        "https://www.dandad.org/work/annual/d-ad-in-2025/trends-from-the-jury-rooms"
+      ],
+      "observations": [
+        "Typography can become texture, pattern and image instead of remaining only a label.",
+        "The strongest creator work uses platform rules to shape behaviour, not only to deliver content.",
+        "Brand refreshes keep a recognisable origin while pushing originality forward.",
+        "Award-level writing is treated as craft and can create a theatre of the mind.",
+        "Emotion and connection remain a stronger differentiator than scale alone."
+      ],
+      "referenceWorks": [
+        {"name": "Tell Your Universe", "category": "Graphic Design", "transfer": "用一个可复述的视觉隐喻把抽象价值变成画面入口。"},
+        {"name": "Designing Paris 2024", "category": "Black Pencil / Design", "transfer": "把复杂系统压缩成统一而可延展的视觉语言。"}
+      ]
+    },
+    {
+      "id": "cannes-2025",
+      "authority": "Cannes Lions",
+      "region": "international",
+      "type": "official winner announcements and case archive",
+      "officialUrls": [
+        "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+        "https://www.lovethework.com/"
+      ],
+      "observations": [
+        "A simple solution can become a design system when it creates meaningful human impact.",
+        "The most memorable entertainment work roots its narrative in a product attribute and brand identity.",
+        "Craft is not decoration: measured writing, inspired characters and a coherent tone can carry the idea.",
+        "Originality is stronger when cultural impact, purpose and execution reinforce one another."
+      ],
+      "referenceWorks": [
+        {"name": "Caption with Intention", "category": "Design / Digital Craft Grand Prix", "transfer": "把被忽视的功能重新设计成有情绪、有语境的体验。"},
+        {"name": "Night Fishing", "category": "Entertainment Grand Prix", "transfer": "让叙事形式服务于产品独有属性，而不是套用电影感。"},
+        {"name": "Better on a Better Network", "category": "Film Craft Grand Prix", "transfer": "用简单、准确、有灵魂的角色与文字形成长期记忆。"}
+      ]
+    },
+    {
+      "id": "china-great-wall-2025",
+      "authority": "中国广告协会 / 中国国际广告节·中国广告长城奖",
+      "region": "china",
+      "type": "official award rules, winner-list release and jury review",
+      "officialUrls": [
+        "https://www.china-caa.org/cnaa/staticview/jiangxiang1",
+        "https://www.china-caa.org/cnaa/newsdetail/1012",
+        "https://www.china-caa.org/cnaa/newsdetail/1157",
+        "https://zuopin.chinaciaf.org/"
+      ],
+      "observations": [
+        "The award rules require originality, clear communication, strong production and respect for law and public taste.",
+        "Recent jury discussion gives more weight to creative quality together with communication effectiveness.",
+        "AI, integrated marketing, interactive marketing and scenario marketing are treated as current innovation directions.",
+        "Chinese award summaries highlight creative innovation, technology-enabled interaction, social responsibility, precise targeting and business value."
+      ],
+      "referenceWorks": [],
+      "accessNote": "公开入口与官方名单可追踪；部分作品附件需要在中国国际广告节作品系统中继续访问，未将不可核实的图片细节写入记忆。"
+    },
+    {
+      "id": "overseas-platforms-2026",
+      "authority": "YouTube / TikTok / LinkedIn / Pinterest / Instagram official help",
+      "region": "international",
+      "type": "official creator and advertising platform specifications",
+      "officialUrls": ["https://support.google.com/youtube/answer/72431", "https://ads.us.tiktok.com/help/article/tiktok-ads-policy-ad-format-and-functionality?lang=en", "https://www.linkedin.com/help/linkedin/answer/a527229/share-photos-or-videos?lang=en", "https://help.pinterest.com/en/business/article/pinterest-product-specs"],
+      "observations": [
+        "YouTube provides official thumbnail guidance around 16:9, resolution, size limits and community guidelines.",
+        "TikTok official advertising materials prioritize legible 9:16 vertical creative and UI-safe placement.",
+        "LinkedIn official help documents specify 1.91:1 sharing guidance and crop ranges.",
+        "Pinterest official business guidance recommends 2:3 image Pins, saveable themes and safe zones.",
+        "Instagram public help entry is retained as a source but its current unified pixel hard gate is marked operational rather than claimed as verified."
+      ],
+      "referenceWorks": []
+    }
+  ],
+  "principles": [
+    {"id": "concept-before-decoration", "name": "概念先行", "statement": "先能用一句话解释为什么这样做，再决定画面、文字和风格。", "weight": 1.0},
+    {"id": "visual-copy-media-unity", "name": "视觉文案媒介一体", "statement": "画面、文案和发布场景共同完成创意，不把海报当成孤立装饰。", "weight": 0.95},
+    {"id": "human-impact", "name": "真实人文影响", "statement": "让功能、产品或议题对真实的人产生可感知的帮助、情绪或行动。", "weight": 0.95},
+    {"id": "local-and-compliant", "name": "在地语境与合规", "statement": "使用中国用户能理解的生活经验和语言节奏，同时通过原创、版权、广告法和公众品味检查。", "weight": 1.0},
+    {"id": "proof-over-claim", "name": "效果证据优先", "statement": "传播承诺尽量绑定可验证的行为、结果或场景，而不是只堆叠夸张形容词。", "weight": 0.9}
+  ],
+  "mechanisms": [
+    {
+      "id": "concept-before-decoration",
+      "name": "概念先行",
+      "description": "先建立一个可复述的中心概念，再让标题、图像处理和版式共同证明它，避免只换滤镜。",
+      "keywords": ["概念先行", "中心概念", "核心主张", "主张", "核心想法"],
+      "base": 25,
+      "matchThreshold": 1,
+      "sourceTags": ["dandad-2025", "cannes-2025", "china-great-wall-2025"],
+      "transferRules": ["标题必须能解释画面中的关键关系", "图像处理必须服务于主张", "候选方案之间改变机制而不是只改变颜色"]
+    },
+    {
+      "id": "function-to-emotion",
+      "name": "功能变体验",
+      "description": "把产品功能、服务流程或被忽视的问题转成可看见、可感受、可参与的视觉体验。",
+      "keywords": ["功能", "无障碍", "可访问", "系统", "服务体验", "使用体验", "便利", "被忽视的问题"],
+      "base": 24,
+      "matchThreshold": 1,
+      "sourceTags": ["cannes-2025", "china-great-wall-2025"],
+      "transferRules": ["优先寻找用户真实痛点", "避免把功能写成参数表", "让视觉变化本身承担一部分说明责任"]
+    },
+    {
+      "id": "brand-truth",
+      "name": "品牌真相",
+      "description": "把品牌或产品无法替代的独有属性变成叙事动力，让广告换一个品牌就不成立。",
+      "keywords": ["品牌真相", "品牌DNA", "独有属性", "产品属性", "独特属性", "产品力"],
+      "base": 24,
+      "matchThreshold": 1,
+      "sourceTags": ["dandad-2025", "cannes-2025"],
+      "transferRules": ["主标题尽量落到独有事实", "画面主体要能证明品牌差异", "不把泛化的高级感当作品牌策略"]
+    },
+    {
+      "id": "platform-as-idea",
+      "name": "媒介即创意",
+      "description": "把平台规则、用户参与和传播行为设计成创意的一部分，而不是生成一张图后再寻找发布渠道。",
+      "keywords": ["平台规则", "算法", "互动", "参与", "社交", "用户行为", "媒介", "传播机制", "社区"],
+      "base": 24,
+      "matchThreshold": 1,
+      "sourceTags": ["dandad-2025", "china-great-wall-2025"],
+      "transferRules": ["根据平台缩略图、评论、转发或互动方式调整构图", "给用户一个可执行动作", "让格式限制成为记忆点"]
+    },
+    {
+      "id": "human-connection",
+      "name": "人文连接",
+      "description": "用真实人物、关系和情绪建立连接，再让品牌或行动入口自然出现。",
+      "keywords": ["真实人物", "情感", "人文", "社区", "亲情", "人物故事", "共鸣", "连接"],
+      "base": 23,
+      "matchThreshold": 1,
+      "sourceTags": ["dandad-2025", "cannes-2025", "china-great-wall-2025"],
+      "transferRules": ["先判断受众要感受到什么", "避免空泛煽情", "让人物或场景拥有具体细节"]
+    },
+    {
+      "id": "local-context",
+      "name": "在地语境",
+      "description": "用中国用户熟悉的生活经验、语言节奏和社会语境生成差异，而不是简单套用国际广告视觉。",
+      "keywords": ["中国语境", "本土", "在地", "方言", "社会议题", "公益", "乡村", "节日", "文化"],
+      "base": 23,
+      "matchThreshold": 1,
+      "sourceTags": ["china-great-wall-2025"],
+      "transferRules": ["检查中文读法与文化语义", "避免刻板化挪用地方符号", "对社会议题增加事实与合规检查"]
+    },
+    {
+      "id": "proof-of-impact",
+      "name": "证据化主张",
+      "description": "让一句主张绑定可验证的行动、结果、数据或场景，提升商业可信度与发布安全性。",
+      "keywords": ["传播效果", "转化", "增长", "效果证明", "数据", "结果", "证明", "行动结果"],
+      "base": 22,
+      "matchThreshold": 1,
+      "sourceTags": ["cannes-2025", "china-great-wall-2025"],
+      "transferRules": ["没有证据时不生成绝对化承诺", "把 CTA 写成可完成动作", "将效果型文案降级为待核验字段"]
+    }
+  ],
+  "evolutionRules": [
+    "每次学习至少记录一个官方来源和一个可验证观察。",
+    "只有能迁移到多个主题、平台或媒介的模式才能升级为通用机制。",
+    "新机制必须经过至少一个正向样例、一个反例和一次回归测试。",
+    "用户反馈只能改变机制权重，不能覆盖原创、版权、合规和结构化输出硬门槛。",
+    "连续三轮生成中直接发布率下降时，优先调整机制匹配与评分权重，不盲目增加风格模板。"
+  ],
+  "validation": {
+    "status": "curated-v0.5",
+    "verifiedAgainst": ["official source pages", "local poster-system regression tests"],
+    "nextLearningBatch": "继续补充可公开访问的中国长城奖商业广告案例元数据，建立按主题、平台、结果和素材库反馈分类的样本索引。"
+  }
+}

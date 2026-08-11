@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sayelf Poster · 智能出片</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="workspace">
+      <aside class="sidebar left-panel">
+        <div class="brand-mark"><span></span> SAYELF POSTER</div>
+    <div class="eyebrow">AUTOMATIC CREATIVE STUDIO · V0.5</div>
+        <h1>把内容，变成<br /><em>可发布的海报。</em></h1>
+        <p class="intro">上传图片或直接描述想法。系统会自动识别内容、匹配创意机制，并筛选出可以直接使用的方案。</p>
+
+        <form id="generate-form">
+          <label class="field-label" for="prompt">内容 / Prompt</label>
+          <textarea id="prompt" rows="5" placeholder="例如：为一处面向年轻人的海边建筑旅居空间，做一张克制、有建筑感的中文封面。"></textarea>
+
+          <label class="field-label" for="image">主视觉图片</label>
+          <input id="image" type="file" accept="image/png,image/jpeg,image/webp" />
+          <div id="image-name" class="file-note">未选择图片 · 也可以只用 Prompt 生成</div>
+
+          <div class="two-columns">
+            <div>
+              <label class="field-label" for="platform">发布场景</label>
+              <select id="platform">
+                <option value="xhs_cover">小红书封面 · 3:4</option>
+                <option value="wechat_header">公众号头图 · 2.35:1</option>
+                <option value="video_cover">短视频封面 · 16:9</option>
+                <option value="douyin_cover">抖音竖屏封面 · 9:16</option>
+                <option value="instagram_feed">Instagram Feed · 4:5</option>
+                <option value="instagram_story">Instagram Story / Reel · 9:16</option>
+                <option value="youtube_thumbnail">YouTube Thumbnail · 16:9</option>
+                <option value="tiktok_cover">TikTok Cover · 9:16</option>
+                <option value="linkedin_post">LinkedIn Post · 1.91:1</option>
+                <option value="pinterest_pin">Pinterest Pin · 2:3</option>
+                <option value="poster">活动海报 · 3:4</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="tone">氛围</label>
+              <select id="tone">
+                <option value="">自动判断</option>
+                <option value="高级克制">高级克制</option>
+                <option value="广告大片">广告大片</option>
+                <option value="温暖松弛">温暖松弛</option>
+                <option value="直接醒目">直接醒目</option>
+                <option value="大胆实验">大胆实验</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="field-label" for="language">海报语言</label>
+          <select id="language">
+            <option value="auto">自动识别</option>
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+          </select>
+
+          <div class="mode-row">
+            <div>
+              <div class="field-label">工作模式</div>
+              <div id="mode-hint" class="mode-hint">自动模式 · 以直接发布为优先</div>
+            </div>
+            <label class="switch"><input id="professional" type="checkbox" /><span></span></label>
+          </div>
+          <button class="primary-button" type="submit"><span>生成 3 个可发布方案</span><b>↗</b></button>
+        </form>
+        <div id="status" class="status" aria-live="polite">准备就绪</div>
+      </aside>
+
+      <section class="canvas-panel">
+        <div class="canvas-toolbar">
+          <div><span class="live-dot"></span> LIVE PREVIEW</div>
+          <div id="canvas-size">等待输入</div>
+        </div>
+        <div id="preview-empty" class="empty-state">
+          <div class="empty-orbit"><span></span><span></span><span></span></div>
+          <h2>先给我一张图，或一句话</h2>
+          <p>中间区域会显示经过自动评分的成型海报预览。</p>
+        </div>
+        <div id="poster-preview" class="poster-preview hidden"></div>
+        <div id="preview-caption" class="preview-caption hidden"></div>
+      </section>
+
+      <aside class="sidebar right-panel">
+        <div class="right-header"><span>DESIGN REVIEW</span><span id="candidate-count">0 / 3</span></div>
+        <div id="analysis" class="analysis empty-copy">生成后，这里会显示系统对图片、创意机制和版式的判断。</div>
+        <div class="section-divider"></div>
+        <div class="field-label">候选方案</div>
+        <div id="candidate-list" class="candidate-list"></div>
+
+        <div id="review-panel" class="review-panel hidden">
+          <div class="section-divider"></div>
+          <div class="review-heading"><span>QUALITY SCORE</span><strong id="total-score">—</strong></div>
+          <div id="image-treatment" class="image-treatment"></div>
+          <div id="typography-review" class="typography-review"></div>
+          <div id="score-list" class="score-list"></div>
+          <div id="award-bridge" class="award-bridge"></div>
+          <div id="gate-list" class="gate-list"></div>
+          <div class="review-note" id="review-note"></div>
+          <div class="action-row">
+            <button id="download-svg" class="secondary-button">下载 SVG</button>
+            <button id="select-recommend" class="primary-button small">采用此方案</button>
+          </div>
+          <div class="library-save-row">
+            <select id="library-classification" aria-label="素材库候选分类">
+              <option value="publishable">归档为：可直接发布</option>
+              <option value="refine">归档为：候选优化</option>
+              <option value="experimental">归档为：实验探索</option>
+            </select>
+            <button id="save-library" class="secondary-button full">存入本地素材库</button>
+          </div>
+        </div>
+
+        <div id="edit-panel" class="edit-panel hidden">
+          <div class="section-divider"></div>
+          <div class="field-label">专业编辑</div>
+          <label class="mini-label" for="edit-headline">主标题</label>
+          <input id="edit-headline" type="text" />
+          <label class="mini-label" for="edit-subheadline">副标题</label>
+          <input id="edit-subheadline" type="text" />
+          <label class="mini-label" for="edit-remove">移除画面元素</label>
+          <input id="edit-remove" type="text" placeholder="例如：杂物、路牌、无关人物" />
+          <label class="mini-label" for="edit-add">增加画面元素</label>
+          <input id="edit-add" type="text" placeholder="例如：光影、产品、植物" />
+          <label class="mini-label" for="edit-treatment">画面处理</label>
+          <select id="edit-treatment">
+            <option value="original">保留原图</option>
+            <option value="enhance">主体增强</option>
+            <option value="duotone">双色叙事</option>
+            <option value="line_art">线描转译</option>
+            <option value="comic">漫画风格</option>
+            <option value="simple_illustration">简笔插画</option>
+            <option value="monochrome">单色印刷</option>
+            <option value="cinematic">电影级调色</option>
+          </select>
+          <label class="mini-label" for="edit-font-preset">字体方案</label>
+          <select id="edit-font-preset">
+            <option value="auto">自动匹配</option>
+            <option value="editorial">编辑无衬线</option>
+            <option value="cinematic">电影窄体</option>
+            <option value="commercial">商业粗体</option>
+            <option value="lifestyle">生活方式衬线</option>
+            <option value="experimental">实验展示体</option>
+            <option value="mono">信息等宽体</option>
+          </select>
+          <div class="type-control-row"><label class="mini-label" for="edit-font-color">字体颜色</label><input id="edit-font-color" type="color" value="#ffffff" /></div>
+          <label class="mini-label" for="edit-font-size">标题字号 <output id="edit-font-size-value">—</output></label>
+          <input id="edit-font-size" type="range" min="28" max="116" step="1" value="64" />
+          <label class="mini-label" for="edit-letter-spacing">标题字距 <output id="edit-letter-spacing-value">—</output></label>
+          <input id="edit-letter-spacing" type="range" min="-6" max="8" step="0.1" value="-2" />
+          <button id="apply-edit" class="secondary-button full">重新评分并更新预览</button>
+        </div>
+
+        <div class="library-panel">
+          <div class="section-divider"></div>
+          <div class="review-heading"><span>LOCAL MATERIAL LIBRARY</span><strong id="library-count">0 / 20</strong></div>
+          <div id="evolution-summary" class="library-summary">负熵进化：等待第一张素材归档。</div>
+          <div class="library-toolbar">
+            <select id="library-filter" aria-label="素材库分类筛选">
+              <option value="all">全部素材</option>
+              <option value="publishable">可直接发布</option>
+              <option value="refine">候选优化</option>
+              <option value="experimental">实验探索</option>
+            </select>
+          </div>
+          <div id="library-list" class="library-list"><div class="empty-copy">生成后可将成片存入本地素材库。</div></div>
+        </div>
+      </aside>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
