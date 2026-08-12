@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "sayelf-poster": {
+      "command": "node",
+      "args": ["./src/mcp-server.mjs"],
+      "description": "Rule-based multilingual poster generator (generate/evaluate/render + material library)."
+    }
+  }
+}

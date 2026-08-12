@@ -29,6 +29,31 @@ npm start
 
 WebUI 默认采用自动模式，专业模式可编辑主标题、副标题和图片画面处理方式，并重新评分。
 
+## AI 辅助平台接口（MCP / CLI / Skill）
+
+系统封装了统一的技能接口，便于 Codex、Claude Code、WorkBuddy 等 AI 平台安装调用，
+底层与 CLI、WebUI 共用同一个无 API、确定性的引擎。
+
+- **MCP 服务器（推荐）**：`node src/mcp-server.mjs`（stdio 传输），暴露
+  `generate_poster / evaluate_poster / render_poster / list_compositions /
+  list_platforms / list_capabilities / get_award_memory / library_list /
+  library_save / library_delete` 共 10 个结构化工具。
+- **CLI 回退**：`node src/cli.mjs …`，适合无 MCP 的平台或脚本步骤。
+- **Skill 发现**：仓库根目录的 `SKILL.md` 供 Claude 系平台自动识别能力；
+  `.mcp.json.example` 为可直接复制的 Claude Code 配置。
+
+安装与各平台配置见 `docs/AI-PLATFORM-SETUP.md`。快速验证 MCP 链路：
+
+```bash
+npm install
+npm test               # 引擎回归（17 passed）
+node scripts/mcp-smoke.mjs   # MCP 端到端冒烟
+```
+
+典型调用流程：`generate_poster {prompt, platform, outFile}` →
+`evaluate_poster {file}` → `render_poster {file, outFile}` →
+`library_save {file, classification}`。
+
 ## CLI
 
 ```powershell

@@ -4,10 +4,18 @@
   "private": true,
   "type": "module",
   "description": "多语言广告海报自动生成、平台适配、素材库与负熵递归进化工作流",
+  "bin": {
+    "sayelf-poster": "src/cli.mjs",
+    "sayelf-poster-mcp": "src/mcp-server.mjs"
+  },
   "scripts": {
     "start": "node src/server.mjs",
     "cli": "node src/cli.mjs",
+    "mcp": "node src/mcp-server.mjs",
     "test": "node --test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0"
   },
   "engines": {
     "node": ">=20"
