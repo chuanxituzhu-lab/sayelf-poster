@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "online-inspiration-v0.1",
+  "limit": 10,
+  "items": [
+    {
+      "id": "online-cannes-2025-3",
+      "title": "Better on a Better Network",
+      "referenceName": "Better on a Better Network",
+      "authority": "Cannes Lions",
+      "region": "international",
+      "category": "Film Craft Grand Prix",
+      "transfer": "用简单、准确、有灵魂的角色与文字形成长期记忆。",
+      "sourceId": "cannes-2025",
+      "sourceUrl": "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+      "sourceUrls": [
+        "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+        "https://www.lovethework.com/"
+      ],
+      "sourceType": "official winner announcements and case archive",
+      "savedFrom": "award-learning-memory",
+      "memoryVersion": "0.5",
+      "createdAt": "2026-08-12T02:07:42.998Z",
+      "updatedAt": "2026-08-12T02:07:42.998Z"
+    },
+    {
+      "id": "online-cannes-2025-2",
+      "title": "Night Fishing",
+      "referenceName": "Night Fishing",
+      "authority": "Cannes Lions",
+      "region": "international",
+      "category": "Entertainment Grand Prix",
+      "transfer": "让叙事形式服务于产品独有属性，而不是套用电影感。",
+      "sourceId": "cannes-2025",
+      "sourceUrl": "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+      "sourceUrls": [
+        "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+        "https://www.lovethework.com/"
+      ],
+      "sourceType": "official winner announcements and case archive",
+      "savedFrom": "award-learning-memory",
+      "memoryVersion": "0.5",
+      "createdAt": "2026-08-12T02:07:42.998Z",
+      "updatedAt": "2026-08-12T02:07:42.998Z"
+    },
+    {
+      "id": "online-cannes-2025-1",
+      "title": "Caption with Intention",
+      "referenceName": "Caption with Intention",
+      "authority": "Cannes Lions",
+      "region": "international",
+      "category": "Design / Digital Craft Grand Prix",
+      "transfer": "把被忽视的功能重新设计成有情绪、有语境的体验。",
+      "sourceId": "cannes-2025",
+      "sourceUrl": "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+      "sourceUrls": [
+        "https://www.canneslions.com/news/cannes-lions-announces-2025-winners-across-entertainment-and-craft-tracks",
+        "https://www.lovethework.com/"
+      ],
+      "sourceType": "official winner announcements and case archive",
+      "savedFrom": "award-learning-memory",
+      "memoryVersion": "0.5",
+      "createdAt": "2026-08-12T02:07:42.998Z",
+      "updatedAt": "2026-08-12T02:07:42.998Z"
+    },
+    {
+      "id": "online-dandad-2025-2",
+      "title": "Designing Paris 2024",
+      "referenceName": "Designing Paris 2024",
+      "authority": "D&AD",
+      "region": "international",
+      "category": "Black Pencil / Design",
+      "transfer": "把复杂系统压缩成统一而可延展的视觉语言。",
+      "sourceId": "dandad-2025",
+      "sourceUrl": "https://www.dandad.org/work/annual",
+      "sourceUrls": [
+        "https://www.dandad.org/work/annual",
+        "https://www.dandad.org/work",
+        "https://www.dandad.org/work/annual/d-ad-in-2025/trends-from-the-jury-rooms"
+      ],
+      "sourceType": "award archive and jury insights",
+      "savedFrom": "award-learning-memory",
+      "memoryVersion": "0.5",
+      "createdAt": "2026-08-12T02:07:42.998Z",
+      "updatedAt": "2026-08-12T02:07:42.998Z"
+    },
+    {
+      "id": "online-dandad-2025-1",
+      "title": "Tell Your Universe",
+      "referenceName": "Tell Your Universe",
+      "authority": "D&AD",
+      "region": "international",
+      "category": "Graphic Design",
+      "transfer": "用一个可复述的视觉隐喻把抽象价值变成画面入口。",
+      "sourceId": "dandad-2025",
+      "sourceUrl": "https://www.dandad.org/work/annual",
+      "sourceUrls": [
+        "https://www.dandad.org/work/annual",
+        "https://www.dandad.org/work",
+        "https://www.dandad.org/work/annual/d-ad-in-2025/trends-from-the-jury-rooms"
+      ],
+      "sourceType": "award archive and jury insights",
+      "savedFrom": "award-learning-memory",
+      "memoryVersion": "0.5",
+      "createdAt": "2026-08-12T02:07:42.998Z",
+      "updatedAt": "2026-08-12T02:07:42.998Z"
+    }
+  ]
+}

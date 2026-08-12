@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { analyzeInput, evaluateDesign, generateCandidates, renderSvg } from "./core.mjs";
 import { getLearningMemorySummary } from "./learning-memory.mjs";
 import { deleteLibraryItem, getLibraryItem, listLibrary, saveLibraryItem } from "./library.mjs";
+import { deleteOnlineReference, listOnlineLibrary, saveOnlineReference, seedAwardReferences } from "./online-library.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const webRoot = path.resolve(root, "../web");
@@ -50,6 +51,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: "0.5.0" });
     if (req.method === "GET" && req.url === "/api/learning-memory") return sendJson(res, 200, getLearningMemorySummary());
     if (req.method === "GET" && req.url === "/api/library") return sendJson(res, 200, await listLibrary());
+    if (req.method === "GET" && req.url === "/api/online-library") return sendJson(res, 200, await listOnlineLibrary());
+    if (req.method === "POST" && req.url === "/api/online-library/seed-award-references") return sendJson(res, 200, await seedAwardReferences());
+    const onlineItemMatch = req.url.match(/^\/api\/online-library\/items\/([^/]+)$/);
+    if (req.method === "POST" && req.url === "/api/online-library/items") return sendJson(res, 200, await saveOnlineReference(await readJson(req)));
+    if (req.method === "DELETE" && onlineItemMatch) {
+      const removed = await deleteOnlineReference(decodeURIComponent(onlineItemMatch[1]));
+      return removed ? sendJson(res, 200, { ok: true }) : sendJson(res, 404, { error: "Online reference not found" });
+    }
     if (req.method === "GET" && req.url === "/api/evolution") return sendJson(res, 200, (await listLibrary()).evolution);
     const previewMatch = req.method === "GET" ? req.url.match(/^\/api\/library\/items\/([^/]+)\/preview$/) : null;
     if (previewMatch) {

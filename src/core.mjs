@@ -780,7 +780,8 @@ export function renderSvg(candidate) {
   const height = candidate.targetPlatform?.height ?? 1200;
   const style = candidate.style ?? STYLE_PROFILES.editorial;
   const treatmentId = candidate.imageTreatment?.id ?? "original";
-  const typography = candidate.typography ?? buildTypographyPlan({ input: { language: candidate.language }, platform: candidate.targetPlatform, style, mechanism: candidate.mechanism, headline: candidate.headline, subheadline: candidate.subheadline });
+  const typographyBase = candidate.typography ?? buildTypographyPlan({ input: { language: candidate.language }, platform: candidate.targetPlatform, style, mechanism: candidate.mechanism, headline: candidate.headline, subheadline: candidate.subheadline });
+  const typography = { ...typographyBase, secondaryColor: typographyBase.headlineColor ?? style.text, accentColor: typographyBase.headlineColor ?? style.text };
   const imageHref = candidate.image?.dataUrl;
   const image = imageHref
     ? `<image href="${escapeXml(imageHref)}" x="0" y="0" width="${width}" height="${height}" preserveAspectRatio="xMidYMid slice" opacity="0.82"/>`
