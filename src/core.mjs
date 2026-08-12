@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { AWARD_LEARNING_MEMORY, getLearningMatches, getLearningMemorySummary } from "./learning-memory.mjs";
+import { summarizeImageInsight } from "./image-insight.mjs";
 import { buildTypographyPlan, refreshTypographyPlan } from "./typography.mjs";
 
 export const PLATFORM_PROFILES = {
@@ -437,6 +438,8 @@ function pickMechanism(input, subject) {
   if (text.includes("大片") || text.includes("广告感") || text.includes("史诗") || text.includes("电影级") || /\b(blockbuster|cinematic|film|hero campaign|advertising film)\b/i.test(text)) {
     return CREATIVE_MECHANISMS.find(item => item.id === "cinematic-scale");
   }
+  const assistantMechanism = CREATIVE_MECHANISMS.find(item => item.id === input.aiAnalysis?.mechanismId);
+  if (assistantMechanism) return assistantMechanism;
   const learned = getLearningMatches(text);
   if (learned[0]) return learned[0].item;
   const ranked = CREATIVE_MECHANISMS.map(item => ({ item, score: scoreKeywords(text, item.keywords) }))
@@ -466,17 +469,22 @@ function pickStyle(input, subject, index) {
   return STYLE_PROFILES[styleId];
 }
 
-function buildCopy(input, subject, index) {
+function buildCopy(input, subject, index, imageInsight) {
   const explicit = cleanText(input.headline);
   if (explicit) return explicit;
+  if (imageInsight?.headlineVariants?.[index]) return imageInsight.headlineVariants[index];
   if (input.language === "en") return EN_HEADLINES[index % EN_HEADLINES.length];
   const source = DEFAULT_HEADLINES[subject.id] ?? GENERIC_HEADLINES;
   return source[index % source.length];
 }
 
-function buildSubheadline(input, subject, mechanism, style) {
+function buildSubheadline(input, subject, mechanism, style, imageInsight) {
   const explicit = cleanText(input.subheadline);
   if (explicit) return explicit;
+  if (imageInsight?.corePoint) {
+    const point = cleanText(imageInsight.corePoint);
+    return point.length > 52 ? point.slice(0, 50) + "…" : point;
+  }
   if (input.language === "en") return EN_SUBHEADLINES[(subject.id.length + subject.id.charCodeAt(0)) % EN_SUBHEADLINES.length];
   const goal = cleanText(input.goal);
   if (goal) return goal.length > 52 ? `${goal.slice(0, 50)}…` : goal;
@@ -524,6 +532,10 @@ function compactInput(input = {}) {
     mode: input.mode === "professional" ? "professional" : "automatic",
     imageDataUrl: input.imageDataUrl || "",
     imagePath: cleanText(input.imagePath),
+    aiAnalysis: input.aiAnalysis && typeof input.aiAnalysis === "object" ? input.aiAnalysis : null,
+    aiProvider: input.aiProvider && typeof input.aiProvider === "object" ? input.aiProvider : null,
+    aiDetection: input.aiDetection && typeof input.aiDetection === "object" ? input.aiDetection : null,
+    assistantProvider: cleanText(input.assistantProvider),
     imageFeatures: input.imageFeatures || {}
   };
 }
@@ -536,6 +548,7 @@ export function analyzeInput(rawInput = {}) {
   const platform = PLATFORM_PROFILES[input.platform];
   const platformRule = getPlatformRule(input.platform);
   const learning = getLearningMemorySummary([input.prompt, input.goal, input.tone, subject.name].filter(Boolean).join(" "));
+  const imageInsight = summarizeImageInsight({ input, subject: localizedSubject, language: input.language });
   return {
     language: input.language,
     subject: { id: localizedSubject.id, name: localizedSubject.name },
@@ -552,11 +565,15 @@ export function analyzeInput(rawInput = {}) {
       officialUrls: platformRule.officialUrls ?? []
     } : null,
     learning,
+    aiProvider: input.aiProvider ?? { id: "local-rules", name: "本地规则", mode: "local", status: "local", control: "in-process" },
+    aiDetection: input.aiDetection ?? null,
+    imageInsight,
     imageFeatures: {
       subject: input.imageFeatures.subject || localizedSubject.name,
       dominantColor: input.imageFeatures.dominantColor || "#173f5f",
       aspectRatio: input.imageFeatures.aspectRatio || "unknown",
-      safeTextRegion: input.imageFeatures.safeTextRegion || "自动推断"
+      safeTextRegion: input.imageFeatures.safeTextRegion || "自动推断",
+      visualSignals: input.imageFeatures.visualSignals || {}
     },
     rationale: input.language === "en"
       ? `Identified as ${localizedSubject.name}. Recommended “${mechanism.name}” because ${mechanism.description}`
@@ -569,8 +586,9 @@ function makeCandidate(input, analysis, index) {
   const mechanismBase = CREATIVE_MECHANISMS.find(item => item.id === analysis.mechanism.id) ?? CREATIVE_MECHANISMS[0];
   const mechanism = localizeMechanism(mechanismBase, input.language);
   const imageTreatment = pickImageTreatment(input, { id: analysis.subject.id, name: analysis.subject.name }, style, index);
-  const headline = buildCopy(input, { id: analysis.subject.id, name: analysis.subject.name }, index);
-  const subheadline = buildSubheadline(input, { id: analysis.subject.id, name: analysis.subject.name }, mechanism, style);
+  const imageInsight = analysis.imageInsight;
+  const headline = buildCopy(input, { id: analysis.subject.id, name: analysis.subject.name }, index, imageInsight);
+  const subheadline = buildSubheadline(input, { id: analysis.subject.id, name: analysis.subject.name }, mechanism, style, imageInsight);
   const typography = buildTypographyPlan({ input, platform: analysis.platform, style, mechanism, imageFeatures: analysis.imageFeatures, headline, subheadline });
   const id = `poster-${hash([input.prompt, input.platform, style.id, mechanism.id, index].join("|"))}`;
   const candidate = {
@@ -581,6 +599,7 @@ function makeCandidate(input, analysis, index) {
     targetPlatform: analysis.platform,
     platformRule: analysis.platformRule,
     imageFeatures: analysis.imageFeatures,
+    imageInsight,
     headline,
     subheadline,
     cta: input.language === "en" && input.cta === "了解更多" ? "Learn more" : input.cta,

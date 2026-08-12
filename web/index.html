@@ -66,6 +66,7 @@
             </div>
             <label class="switch"><input id="professional" type="checkbox" /><span></span></label>
           </div>
+          <div id="ai-status" class="ai-status" aria-live="polite">智能协助：正在探测 · 未检测到时使用本地规则</div>
           <button class="primary-button" type="submit"><span>生成 3 个可发布方案</span><b>↗</b></button>
         </form>
         <div id="status" class="status" aria-live="polite">准备就绪</div>
@@ -87,7 +88,20 @@
 
       <aside class="sidebar right-panel">
         <div class="right-header"><span>DESIGN REVIEW</span><span id="candidate-count">0 / 3</span></div>
+        <section class="assistant-session-panel" aria-label="AI 会话控制">
+          <div class="session-heading"><span>AI SESSION CONTROL</span><span id="session-provider">本地规则</span></div>
+          <div id="session-log" class="session-log">
+            <div class="session-message system">点击中间预览中的图片或文字，只会把选择反馈到会话栏；提交文字指令后才会修改设计。</div>
+          </div>
+          <div id="session-selection" class="session-selection">当前未选择画面对象</div>
+          <form id="session-form" class="session-form">
+            <textarea id="session-command" rows="3" placeholder="例如：把主标题改为“住进风景”，画面改成电影级调色"></textarea>
+            <button class="secondary-button full" type="submit">发送文字指令</button>
+          </form>
+          <div class="file-note">点击只反馈 · 文字指令才修改 · 修改后自动重新评分</div>
+        </section>
         <div id="analysis" class="analysis empty-copy">生成后，这里会显示系统对图片、创意机制和版式的判断。</div>
+        <div id="image-insight" class="image-insight"></div>
         <div class="section-divider"></div>
         <div class="field-label">候选方案</div>
         <div id="candidate-list" class="candidate-list"></div>

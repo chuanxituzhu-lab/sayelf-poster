@@ -98,6 +98,7 @@ function buildItem({ candidate, classification, previewSvg, source = "generated"
       ratio: candidate.targetPlatform?.ratio ?? "unknown"
     },
     subject: candidate.subject ?? null,
+    imageInsight: candidate.imageInsight ?? null,
     style: candidate.style ?? null,
     mechanism: candidate.mechanism ?? null,
     imageTreatment: candidate.imageTreatment ?? null,

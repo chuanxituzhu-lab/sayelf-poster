@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeInput, evaluateDesign, generateCandidates, renderSvg } from "./core.mjs";
+import { detectProviders, prepareGeneration, prepareSessionCommand } from "./ai-orchestrator.mjs";
 import { getLearningMemorySummary } from "./learning-memory.mjs";
 import { deleteLibraryItem, getLibraryItem, listLibrary, saveLibraryItem } from "./library.mjs";
 
@@ -49,6 +50,7 @@ const server = http.createServer(async (req, res) => {
   try {
     if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: "0.5.0" });
     if (req.method === "GET" && req.url === "/api/learning-memory") return sendJson(res, 200, getLearningMemorySummary());
+    if (req.method === "GET" && req.url === "/api/ai/providers") return sendJson(res, 200, await detectProviders());
     if (req.method === "GET" && req.url === "/api/library") return sendJson(res, 200, await listLibrary());
     if (req.method === "GET" && req.url === "/api/evolution") return sendJson(res, 200, (await listLibrary()).evolution);
     const previewMatch = req.method === "GET" ? req.url.match(/^\/api\/library\/items\/([^/]+)\/preview$/) : null;
@@ -69,8 +71,9 @@ const server = http.createServer(async (req, res) => {
       const removed = await deleteLibraryItem(decodeURIComponent(itemMatch[1]));
       return removed ? sendJson(res, 200, { ok: true }) : sendJson(res, 404, { error: "Material not found" });
     }
-    if (req.method === "POST" && req.url === "/api/analyze") return sendJson(res, 200, analyzeInput(await readJson(req)));
-    if (req.method === "POST" && req.url === "/api/generate") return sendJson(res, 200, generateCandidates(await readJson(req)));
+    if (req.method === "POST" && req.url === "/api/analyze") return sendJson(res, 200, analyzeInput(await prepareGeneration(await readJson(req))));
+    if (req.method === "POST" && req.url === "/api/generate") return sendJson(res, 200, generateCandidates(await prepareGeneration(await readJson(req))));
+    if (req.method === "POST" && req.url === "/api/session/command") return sendJson(res, 200, await prepareSessionCommand(await readJson(req)));
     if (req.method === "POST" && req.url === "/api/evaluate") {
       const body = await readJson(req);
       return sendJson(res, 200, evaluateDesign(body.candidate ?? body, body.input ?? {}));
