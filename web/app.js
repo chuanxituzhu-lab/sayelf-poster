@@ -1,4 +1,4 @@
-const state = { run: null, selected: null, imageDataUrl: "", imageFeatures: {}, library: null };
+const state = { run: null, selected: null, imageDataUrl: "", imageFeatures: {}, library: null, onlineLibrary: null };
 
 const $ = selector => document.querySelector(selector);
 const form = $("#generate-form");
@@ -135,6 +135,7 @@ function applyTypographyVars(candidate) {
     "--headline-line": typography.lineHeight ?? 1.06,
     "--headline-tracking": typography.letterSpacingCss ?? "-2px",
     "--headline-color": typography.headlineColor ?? candidate.style.text,
+    "--poster-text-color": typography.headlineColor ?? candidate.style.text,
     "--secondary-color": typography.secondaryColor ?? candidate.style.secondary,
     "--accent-color": typography.accentColor ?? candidate.style.accent,
     "--kicker-size": String(typography.kickerFontSize ?? 13) + "px",
@@ -186,6 +187,34 @@ async function loadLibrary() {
   }
 }
 
+async function loadOnlineLibrary() {
+  try {
+    const response = await fetch("/api/online-library");
+    state.onlineLibrary = await response.json();
+    renderOnlineLibrary();
+  } catch (error) {
+    $("#online-library-summary").textContent = `线上灵感库读取失败：${error.message}`;
+  }
+}
+
+function renderOnlineLibrary() {
+  if (!state.onlineLibrary) return;
+  const items = state.onlineLibrary.items ?? [];
+  $("#online-library-count").textContent = `${items.length} / ${state.onlineLibrary.limit ?? 10}`;
+  $("#online-library-summary").textContent = items.length
+    ? `已保存 ${items.length} 个线上范本：只沉淀来源、观察与可迁移机制。`
+    : "保存官方来源链接与可迁移创意机制，不复制获奖原作。";
+  $("#online-library-list").innerHTML = items.length
+    ? items.map(item => `<article class="online-library-item"><div class="online-library-top"><span>${escapeHtml(item.authority ?? "线上来源")}</span><button type="button" data-online-library-delete="${escapeHtml(item.id)}" aria-label="删除线上范本">×</button></div><a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a><small>${escapeHtml(item.category ?? "未分类")} · ${escapeHtml(item.region ?? "unknown")}</small><p>${escapeHtml(item.transfer ?? "")}</p></article>`).join("")
+    : `<div class="empty-copy">点击后导入 5 个已学习的奖项范本。</div>`;
+  document.querySelectorAll("[data-online-library-delete]").forEach(button => button.addEventListener("click", async () => {
+    const response = await fetch(`/api/online-library/items/${encodeURIComponent(button.dataset.onlineLibraryDelete)}`, { method: "DELETE" });
+    if (!response.ok) return setStatus("线上范本删除失败");
+    setStatus("线上范本已移除");
+    await loadOnlineLibrary();
+  }));
+}
+
 function renderLibrary() {
   if (!state.library) return;
   const filter = $("#library-filter").value;
@@ -217,6 +246,21 @@ $("#save-library").addEventListener("click", async () => {
   await loadLibrary();
 });
 
+$("#seed-online-library").addEventListener("click", async () => {
+  const button = $("#seed-online-library");
+  button.disabled = true;
+  try {
+    const response = await fetch("/api/online-library/seed-award-references", { method: "POST" });
+    const result = await response.json();
+    if (!response.ok) return setStatus(result.error || "线上范本导入失败");
+    setStatus(`已导入 ${result.added} 个优秀广告范本，线上灵感库最多保存 10 个`);
+    state.onlineLibrary = result;
+    renderOnlineLibrary();
+  } finally {
+    button.disabled = false;
+  }
+});
+
 $("#select-recommend").addEventListener("click", () => { if (state.selected) setStatus(`已采用“${state.selected.headline}”，可继续下载或进入专业编辑`); });
 
 $("#apply-edit").addEventListener("click", async () => {
@@ -245,3 +289,4 @@ $("#apply-edit").addEventListener("click", async () => {
 
 updateModeHint();
 loadLibrary();
+loadOnlineLibrary();

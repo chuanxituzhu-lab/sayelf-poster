@@ -4,6 +4,11 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 // relaxed 3.0 large-text ratio; body/subheadline copy must meet 4.5.
 export const AA_NORMAL = 4.5;
 export const AA_LARGE = 3.0;
+// Muted gold is the default advertising-display color. Keep darker variants
+// so automatic matching can preserve readability on lighter images.
+export const MATTE_GOLD = "#c4a46a";
+export const MATTE_GOLD_DARK = "#806331";
+export const MATTE_GOLD_DEEP = "#5f431a";
 
 export const TYPOGRAPHY_PRESETS = {
   editorial: {
@@ -100,13 +105,25 @@ export function scoreTypographyPlan(plan = {}) {
 
 function chooseTextColor(style = {}, imageFeatures = {}) {
   const background = imageFeatures.dominantColor || style.background || "#102a43";
+  const matteGold = [MATTE_GOLD, MATTE_GOLD_DARK, MATTE_GOLD_DEEP]
+    .map(headline => ({ headline, contrast: contrastRatio(headline, background) }))
+    .find(candidate => candidate.contrast >= AA_NORMAL);
+  if (matteGold) {
+    return {
+      headline: matteGold.headline,
+      secondary: style.secondary || "#c5c5c5",
+      background,
+      contrast: matteGold.contrast,
+      headlineTone: "matte-gold"
+    };
+  }
   const preferred = style.text || "#ffffff";
   const preferredContrast = contrastRatio(preferred, background);
-  if (preferredContrast >= 4.5) return { headline: preferred, secondary: style.secondary || "#c5c5c5", background, contrast: preferredContrast };
+  if (preferredContrast >= 4.5) return { headline: preferred, secondary: style.secondary || "#c5c5c5", background, contrast: preferredContrast, headlineTone: "auto" };
   const lightContrast = contrastRatio("#ffffff", background);
   const darkContrast = contrastRatio("#111111", background);
   const headline = lightContrast >= darkContrast ? "#ffffff" : "#111111";
-  return { headline, secondary: headline === "#ffffff" ? "#d9dedc" : "#3f4546", background, contrast: Math.max(lightContrast, darkContrast) };
+  return { headline, secondary: headline === "#ffffff" ? "#d9dedc" : "#3f4546", background, contrast: Math.max(lightContrast, darkContrast), headlineTone: "auto" };
 }
 
 function pickPreset(styleId, mechanismId) {
@@ -153,6 +170,7 @@ export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mec
   const contrast = colors.contrast;
   const overflowRisk = lineCount > 2 || subheadlineLength > 52;
   const signals = [];
+  if (colors.headlineTone === "matte-gold") signals.push("主标题采用哑金色并按画面明度自动匹配");
   if (contrast >= 7) { signals.push("文字与主色形成高对比"); }
   else if (contrast >= 4.5) { signals.push("文字对比达到可读门槛"); }
   else { signals.push("文字与背景对比不足"); }
@@ -181,6 +199,7 @@ export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mec
     letterSpacing,
     letterSpacingCss: `${letterSpacing}px`,
     headlineColor: colors.headline,
+    headlineTone: colors.headlineTone,
     secondaryColor: colors.secondary,
     accentColor: style.accent || "#f6a04d",
     backgroundColor: colors.background,

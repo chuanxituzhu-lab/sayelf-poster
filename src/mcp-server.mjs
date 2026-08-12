@@ -41,6 +41,13 @@ import {
   deleteLibraryItem,
   LIBRARY_CLASSIFICATIONS
 } from "./library.mjs";
+import {
+  listOnlineLibrary,
+  seedAwardReferences,
+  saveOnlineReference,
+  deleteOnlineReference,
+  ONLINE_LIBRARY_LIMIT
+} from "./online-library.mjs";
 
 const PLATFORM_IDS = Object.keys(PLATFORM_PROFILES);
 
@@ -181,6 +188,41 @@ const TOOLS = [
       properties: { id: { type: "string", description: "Library item id." } },
       required: ["id"]
     }
+  },
+  {
+    name: "online_library_list",
+    description: `List online award-reference cards and distilled creative mechanisms (max ${ONLINE_LIBRARY_LIMIT} slots).`,
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "online_library_seed",
+    description: "Import the award-reference works already present in the local award-learning memory into the bounded online inspiration library.",
+    inputSchema: { type: "object", properties: {} }
+  },
+  {
+    name: "online_library_save",
+    description: "Save an online reference as source metadata and a transferable creative-mechanism note without copying the original artwork.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string" },
+        sourceUrl: { type: "string", description: "Official http(s) source page." },
+        authority: { type: "string" },
+        region: { type: "string", enum: ["international", "china", "unknown"] },
+        category: { type: "string" },
+        transfer: { type: "string", description: "Distilled mechanism that can be transferred to a new brief." }
+      },
+      required: ["title", "sourceUrl"]
+    }
+  },
+  {
+    name: "online_library_delete",
+    description: "Delete an online inspiration reference by id.",
+    inputSchema: {
+      type: "object",
+      properties: { id: { type: "string" } },
+      required: ["id"]
+    }
   }
 ];
 
@@ -267,6 +309,13 @@ async function dispatch(name, args = {}) {
     case "library_save": return handleLibrarySave(args);
     case "library_delete": {
       const ok = await deleteLibraryItem(args.id);
+      return ok ? textContent(`deleted ${args.id}`) : errorResult(`not found: ${args.id}`);
+    }
+    case "online_library_list": return jsonContent(await listOnlineLibrary());
+    case "online_library_seed": return jsonContent(await seedAwardReferences());
+    case "online_library_save": return jsonContent(await saveOnlineReference(args));
+    case "online_library_delete": {
+      const ok = await deleteOnlineReference(args.id);
       return ok ? textContent(`deleted ${args.id}`) : errorResult(`not found: ${args.id}`);
     }
     default:

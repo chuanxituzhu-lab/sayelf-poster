@@ -107,6 +107,17 @@ test("typography fit adapts to language, platform and award bridge", () => {
   assert.ok(candidate.evaluation.awardComparison.dimensions.typography >= 0);
 });
 
+test("automatic typography prefers readable matte gold on dark advertising imagery", () => {
+  const run = generateCandidates({ prompt: "骞垮憡澶х墖 鐢靛奖绾х殑娴峰哺寤虹瓚", tone: "骞垮憡澶х墖", platform: "poster" });
+  const candidate = run.candidates[0];
+  assert.equal(candidate.typography.headlineTone, "matte-gold");
+  assert.match(candidate.typography.headlineColor, /^#(c4a46a|806331|5f431a)$/);
+  assert.ok(candidate.typography.contrastRatio >= 4.5);
+  const svg = renderSvg(candidate);
+  const fontColorCount = (svg.match(new RegExp(`fill="${candidate.typography.headlineColor}"`, "g")) ?? []).length;
+  assert.ok(fontColorCount >= 4);
+});
+
 test("professional typography override is recalculated before the readability gate", () => {
   const run = generateCandidates({ prompt: "建筑展览海报", platform: "poster" });
   const candidate = {

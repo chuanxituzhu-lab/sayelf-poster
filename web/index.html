@@ -147,7 +147,7 @@
             <option value="experimental">实验展示体</option>
             <option value="mono">信息等宽体</option>
           </select>
-          <div class="type-control-row"><label class="mini-label" for="edit-font-color">字体颜色</label><input id="edit-font-color" type="color" value="#ffffff" /></div>
+          <div class="type-control-row"><label class="mini-label" for="edit-font-color">字体颜色</label><input id="edit-font-color" type="color" value="#c4a46a" /></div>
           <label class="mini-label" for="edit-font-size">标题字号 <output id="edit-font-size-value">—</output></label>
           <input id="edit-font-size" type="range" min="28" max="116" step="1" value="64" />
           <label class="mini-label" for="edit-letter-spacing">标题字距 <output id="edit-letter-spacing-value">—</output></label>
@@ -168,6 +168,14 @@
             </select>
           </div>
           <div id="library-list" class="library-list"><div class="empty-copy">生成后可将成片存入本地素材库。</div></div>
+        </div>
+
+        <div class="library-panel online-library-panel">
+          <div class="section-divider"></div>
+          <div class="review-heading"><span>ONLINE AWARD REFERENCES</span><strong id="online-library-count">0 / 10</strong></div>
+          <div id="online-library-summary" class="library-summary">保存官方来源链接与可迁移创意机制，不复制获奖原作。</div>
+          <button id="seed-online-library" class="secondary-button full">导入已学习的优秀范本</button>
+          <div id="online-library-list" class="online-library-list"><div class="empty-copy">点击后导入 5 个已学习的奖项范本。</div></div>
         </div>
       </aside>
     </main>

@@ -2,5 +2,30 @@
   "schemaVersion": "library-v0.5",
   "limit": 20,
   "items": [],
-  "evolutionLog": []
+  "evolutionLog": [
+    {
+      "id": "evolution-1786500452836",
+      "type": "material-removed",
+      "materialId": "material-poster-69aad10f",
+      "at": "2026-08-12T02:07:32.836Z",
+      "observation": null,
+      "nextAdjustment": "保持素材库在 20 张以内，优先保留高分且可迁移的机制"
+    },
+    {
+      "id": "evolution-1786499792568",
+      "type": "material-archived",
+      "materialId": "material-poster-69aad10f",
+      "at": "2026-08-12T01:56:32.561Z",
+      "observation": {
+        "platform": "xhs_cover",
+        "mechanism": "concept-before-decoration",
+        "awardScores": {
+          "international": 86,
+          "china": 86
+        },
+        "negativeEntropy": 100
+      },
+      "nextAdjustment": "保留机制关系，下一轮替换对象或语境验证创新"
+    }
+  ]
 }
