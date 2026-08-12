@@ -124,3 +124,48 @@ test("professional typography override is recalculated before the readability ga
   assert.equal(evaluation.typography.contrastRatio, 4.48);
   assert.equal(evaluation.gates.find(gate => gate.id === "typography-readable").passed, false);
 });
+
+test("image insight distills the core point and prompt overrides conflicting visual analysis", () => {
+  const run = generateCandidates({
+    prompt: "为海边建筑做封面，核心观点：住进风景，而不是逃离生活",
+    platform: "poster",
+    imageFeatures: {
+      subject: "海边建筑",
+      corePoint: "不要错过这栋房子",
+      visualSignals: { lighting: "dark", palette: "cool", contrast: "high" }
+    }
+  });
+  assert.equal(run.analysis.imageInsight.source, "prompt-directed");
+  assert.equal(run.analysis.imageInsight.corePoint, "住进风景，而不是逃离生活");
+  assert.ok(run.analysis.imageInsight.evidence.includes("Prompt 核心表达优先"));
+  assert.equal(run.analysis.imageFeatures.visualSignals.palette, "cool");
+  assert.equal(run.candidates[0].headline, "住进风景");
+  assert.equal(run.candidates[0].subheadline, "住进风景，而不是逃离生活");
+});
+
+test("English image insight stays in English when Prompt has no explicit headline", () => {
+  const run = generateCandidates({
+    prompt: "Create an architecture image for a calm coastal retreat",
+    language: "en",
+    platform: "youtube_thumbnail"
+  });
+  assert.match(run.analysis.imageInsight.corePoint, /[A-Za-z]/);
+  assert.match(run.candidates[0].headline, /[A-Za-z]/);
+});
+
+test("assistant mechanism is accepted while Prompt still owns the core point", () => {
+  const run = generateCandidates({
+    prompt: "为海边建筑做封面，核心观点：住进风景，而不是逃离生活",
+    platform: "poster",
+    aiAnalysis: {
+      corePoint: "AI 建议的另一条观点",
+      mechanismId: "scene-desire",
+      headlineVariants: ["AI 标题", "AI 备选", "AI 第三版"]
+    },
+    aiProvider: { id: "codex", name: "Codex", mode: "assistant", status: "used" }
+  });
+  assert.equal(run.analysis.aiProvider.id, "codex");
+  assert.equal(run.analysis.mechanism.id, "scene-desire");
+  assert.equal(run.analysis.imageInsight.corePoint, "住进风景，而不是逃离生活");
+  assert.equal(run.candidates[0].headline, "住进风景");
+});
