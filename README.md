@@ -36,6 +36,7 @@ node src/cli.mjs generate --prompt "为海边建筑旅居空间制作高级中�
 node src/cli.mjs generate --prompt "做成线描风格，移除路牌，增加一束光" --platform poster --professional --remove "路牌" --add "一束光" --out line-art-run.json
 node src/cli.mjs evaluate --file run.json
 node src/cli.mjs render --file run.json --out poster.svg
+node src/cli.mjs compositions
 node src/cli.mjs memory
 ```
 
@@ -66,6 +67,17 @@ npm test
 奖项学习记忆保存在 `data/award-learning-memory.json`（当前 v0.5），从 D&AD、Cannes Lions、中国广告协会 / 中国国际广告节·中国广告长城奖及海外平台官方规格中提炼可迁移机制。字体模块新增 Type Fit v0.5：自动匹配字体角色、字号、字重、行高、字距、颜色对比和平台安全区，并把字体可读性纳入自动发布门槛与奖项桥接。系统只存来源、观察和规则，不复制具体获奖作品；平台尺寸若未被官方当前文档确认，会标注为运营预设并要求发布前查看平台裁切预览。后续升级需经过正向样例、反例和回归测试。
 
 当输入没有明确风格信号时，系统优先采用“概念先行”作为默认机制；明确提出“广告大片 / 电影级”后才会切换到电影级尺度，避免先套风格再找创意。
+
+## 构图与几何层（v0.6）
+
+在参考多个开源图形海报生成器（尤其是 greggman/gdp-gen 的构图/几何/排版分层思路）后，系统蒸馏出一个规则化、无 API 的 `composition` 模块（`src/composition.mjs`）：
+
+- 显式几何：三分线、黄金分割、模块化字号阶（modular scale），替代原先零散的字号系数。
+- 命名构图库：`编辑三分 / 黄金主视觉 / 居中大字 / 下方承接 / Z 型动线 / 刊头横幅`，每个构图返回以 0..1 分数坐标表示的 kicker、标题、副标题、footer 放置区与对齐方式，SVG 渲染器据此确定文字锚点，而不再使用硬编码坐标。
+- 平台约束优先：横向比例（2.35:1、1.91:1、16:9）强制使用刊头横幅；竖屏优先下方承接；电影级/大片优先黄金主视觉。
+- 同一轮三个候选获得不同构图，既保持差异又稳定可复现。运行 `node src/cli.mjs compositions` 查看全部构图。
+
+对比度阈值同步对齐 WCAG：大号展示型标题可落在大文本 3.0 的可读区间并参与创意/奖项打分，但自动发布硬门槛仍要求正文/副标题达到 4.5（AA_NORMAL）。
 
 ## License
 

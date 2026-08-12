@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
 import path from "node:path";
-import { generateCandidates, evaluateDesign, renderSvg, summarizeRun, PLATFORM_PROFILES } from "./core.mjs";
+import { generateCandidates, evaluateDesign, renderSvg, summarizeRun, PLATFORM_PROFILES, listCompositions } from "./core.mjs";
 import { getLearningMemorySummary } from "./learning-memory.mjs";
 
 function flag(args, name, fallback = "") {
@@ -17,8 +17,12 @@ function commandMemory() {
   console.log(JSON.stringify(getLearningMemorySummary(), null, 2));
 }
 
+function commandCompositions() {
+  console.log(JSON.stringify(listCompositions(), null, 2));
+}
+
 function printHelp() {
-  console.log(`poster-system CLI\n\nCommands:\n  generate  Generate and score three poster candidates\n  evaluate  Evaluate a saved candidate JSON file\n  render    Render a saved candidate JSON file to SVG\n  memory    Show the current award-learning memory\n\nExamples:\n  node src/cli.mjs generate --prompt "海边建筑旅居广告" --platform xhs_cover --out run.json\n  node src/cli.mjs evaluate --file run.json\n  node src/cli.mjs render --file run.json --out poster.svg\n  node src/cli.mjs memory\n\nPlatforms: ${Object.keys(PLATFORM_PROFILES).join(", ")}`);
+  console.log(`poster-system CLI\n\nCommands:\n  generate      Generate and score three poster candidates\n  evaluate      Evaluate a saved candidate JSON file\n  render        Render a saved candidate JSON file to SVG\n  memory        Show the current award-learning memory\n  compositions  List the named composition layouts\n\nExamples:\n  node src/cli.mjs generate --prompt "海边建筑旅居广告" --platform xhs_cover --out run.json\n  node src/cli.mjs evaluate --file run.json\n  node src/cli.mjs render --file run.json --out poster.svg\n  node src/cli.mjs compositions\n  node src/cli.mjs memory\n\nPlatforms: ${Object.keys(PLATFORM_PROFILES).join(", ")}`);
 }
 
 async function commandGenerate(args) {
@@ -71,6 +75,7 @@ try {
   else if (command === "evaluate") await commandEvaluate(args);
   else if (command === "render") await commandRender(args);
   else if (command === "memory") commandMemory();
+  else if (command === "compositions") commandCompositions();
   else throw new Error(`Unknown command: ${command}`);
 } catch (error) {
   console.error(`poster-system: ${error.message}`);

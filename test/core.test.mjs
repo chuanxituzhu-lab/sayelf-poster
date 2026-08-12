@@ -124,3 +124,38 @@ test("professional typography override is recalculated before the readability ga
   assert.equal(evaluation.typography.contrastRatio, 4.48);
   assert.equal(evaluation.gates.find(gate => gate.id === "typography-readable").passed, false);
 });
+
+test("compositions give candidates distinct, geometry-driven layouts", () => {
+  const run = generateCandidates({ prompt: "为海边建筑旅居空间制作高级中文封面", platform: "xhs_cover" });
+  const ids = run.candidates.map(candidate => candidate.layout.id);
+  assert.equal(ids.length, 3);
+  assert.ok(new Set(ids).size >= 2, "at least two distinct compositions per run");
+  for (const candidate of run.candidates) {
+    assert.ok(candidate.composition, "candidate carries a composition plan");
+    assert.equal(candidate.composition.modelVersion, "composition-v0.6");
+    assert.ok(candidate.layout.regions.headline, "layout exposes headline region");
+    assert.ok(candidate.layout.regions.headline.y > 0 && candidate.layout.regions.headline.y < 1);
+    assert.equal(candidate.typography.alignment, candidate.composition.alignment);
+  }
+});
+
+test("horizontal platforms force a masthead composition", () => {
+  const run = generateCandidates({ prompt: "公众号头图 品牌观点", platform: "wechat_header" });
+  for (const candidate of run.candidates) {
+    assert.equal(candidate.layout.id, "masthead");
+  }
+});
+
+test("cinematic prompts select the golden-hero composition", () => {
+  const run = generateCandidates({ prompt: "广告大片 电影级 海岸旅居", platform: "poster" });
+  assert.equal(run.candidates.some(candidate => candidate.layout.id === "golden-hero"), true);
+});
+
+test("composition regions survive an SVG render with anchored text", () => {
+  const run = generateCandidates({ prompt: "居中大字 新品直达", platform: "xhs_cover" });
+  const centered = run.candidates.find(candidate => candidate.composition.alignment === "middle");
+  if (centered) {
+    const svg = renderSvg(centered);
+    assert.ok(svg.includes('text-anchor="middle"'), "middle-aligned composition renders centered text");
+  }
+});

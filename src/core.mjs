@@ -1,6 +1,9 @@
 import crypto from "node:crypto";
 import { AWARD_LEARNING_MEMORY, getLearningMatches, getLearningMemorySummary } from "./learning-memory.mjs";
 import { buildTypographyPlan, refreshTypographyPlan } from "./typography.mjs";
+import { buildCompositionPlan, listCompositions } from "./composition.mjs";
+
+export { listCompositions };
 
 export const PLATFORM_PROFILES = {
   xhs_cover: {
@@ -571,11 +574,12 @@ function makeCandidate(input, analysis, index) {
   const imageTreatment = pickImageTreatment(input, { id: analysis.subject.id, name: analysis.subject.name }, style, index);
   const headline = buildCopy(input, { id: analysis.subject.id, name: analysis.subject.name }, index);
   const subheadline = buildSubheadline(input, { id: analysis.subject.id, name: analysis.subject.name }, mechanism, style);
-  const typography = buildTypographyPlan({ input, platform: analysis.platform, style, mechanism, imageFeatures: analysis.imageFeatures, headline, subheadline });
+  const composition = buildCompositionPlan({ styleId: style.id, mechanismId: mechanism.id, platformRatio: analysis.platform?.ratio, language: input.language, index });
+  const typography = buildTypographyPlan({ input, platform: analysis.platform, style, mechanism, imageFeatures: analysis.imageFeatures, headline, subheadline, composition });
   const id = `poster-${hash([input.prompt, input.platform, style.id, mechanism.id, index].join("|"))}`;
   const candidate = {
     id,
-    version: "0.5",
+    version: "0.6",
     language: input.language,
     subject: analysis.subject,
     targetPlatform: analysis.platform,
@@ -601,11 +605,15 @@ function makeCandidate(input, analysis, index) {
       font: style.font
     },
     layout: {
-      id: style.layout,
-      name: style.layout === "left-copy" ? "左文右图" : style.layout === "bottom-copy" ? "下方承接" : style.layout === "right-product" ? "右侧聚焦" : "错位标题",
+      id: composition.id,
+      name: composition.name,
+      note: composition.note,
+      alignment: composition.alignment,
+      regions: composition.regions,
       safeTextRegion: analysis.imageFeatures.safeTextRegion,
       imageTreatment: index === 0 ? "保留主视觉，使用轻微遮罩" : index === 1 ? "局部放大，增强焦点" : "分割画面，制造节奏"
     },
+    composition,
     imageTreatment,
     typography,
     imageEditPlan: {
@@ -640,7 +648,8 @@ function makeCandidate(input, analysis, index) {
 export function evaluateDesign(candidate, input = {}) {
   const platform = PLATFORM_PROFILES[candidate.targetPlatform?.id] ?? PLATFORM_PROFILES.xhs_cover;
   const platformRule = getPlatformRule(candidate.targetPlatform?.id);
-  const automaticTypography = buildTypographyPlan({ input: { ...input, language: candidate.language ?? input.language }, platform, style: candidate.style, mechanism: candidate.mechanism, imageFeatures: { ...(candidate.imageFeatures ?? {}), ...(input.imageFeatures ?? {}) }, headline: candidate.headline, subheadline: candidate.subheadline });
+  const composition = candidate.composition ?? buildCompositionPlan({ styleId: candidate.style?.id, mechanismId: candidate.mechanism?.id, platformRatio: platform?.ratio, language: candidate.language ?? input.language });
+  const automaticTypography = buildTypographyPlan({ input: { ...input, language: candidate.language ?? input.language }, platform, style: candidate.style, mechanism: candidate.mechanism, imageFeatures: { ...(candidate.imageFeatures ?? {}), ...(input.imageFeatures ?? {}) }, headline: candidate.headline, subheadline: candidate.subheadline, composition });
   const typography = candidate.typography?.automatic === false
     ? refreshTypographyPlan({
         ...automaticTypography,
@@ -659,7 +668,7 @@ export function evaluateDesign(candidate, input = {}) {
     { id: "layout-safe", label: "存在文字安全区域", passed: Boolean(candidate.layout?.safeTextRegion) },
     { id: "platform-ready", label: "平台规格已确定", passed: Boolean(platform?.ratio) },
     { id: "structured", label: "设计保持可编辑结构", passed: Boolean(candidate.style?.id && candidate.layout?.id) },
-    { id: "typography-readable", label: "字体层级、对比与安全区合格", passed: Number(typography?.score ?? 0) >= 70 },
+    { id: "typography-readable", label: "字体层级、对比与安全区合格", passed: Number(typography?.score ?? 0) >= 70 && typography?.passesContrastFloor !== false },
     { id: "attention-hook", label: "封面具备第一眼入口", passed: attention.score >= 5 }
   ];
   const hardGatePassed = gates.every(gate => gate.passed);
@@ -753,7 +762,7 @@ export function generateCandidates(rawInput = {}) {
     return publishDelta || b.evaluation.total - a.evaluation.total;
   });
   return {
-    specVersion: "0.5",
+    specVersion: "0.6",
     generatedAt: new Date().toISOString(),
     input,
     analysis,
@@ -786,18 +795,37 @@ export function renderSvg(candidate) {
           ? `<filter id="image-treatment"><feComponentTransfer><feFuncR type="discrete" tableValues=".08 .35 .72 1"/><feFuncG type="discrete" tableValues=".08 .35 .72 1"/><feFuncB type="discrete" tableValues=".08 .35 .72 1"/></feComponentTransfer></filter>`
           : `<filter id="image-treatment"><feComponentTransfer><feFuncR type="linear" slope="1.12"/><feFuncG type="linear" slope="1.12"/><feFuncB type="linear" slope="1.12"/></feComponentTransfer></filter>`;
   const gradient = `<linearGradient id="shade" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${style.background}" stop-opacity="0.88"/><stop offset="0.72" stop-color="${style.background}" stop-opacity="0.12"/><stop offset="1" stop-color="#000000" stop-opacity="0.55"/></linearGradient>`;
+
+  // Composition-driven placement (v0.6). Falls back to editorial-thirds geometry
+  // so older saved candidates still render.
+  const regions = candidate.composition?.regions ?? candidate.layout?.regions ?? {
+    kicker: { x: 0.07, y: 0.18, anchor: "start" },
+    headline: { x: 0.07, y: 0.39, anchor: "start" },
+    subheadline: { x: 0.07, y: 0.48, anchor: "start" },
+    footer: { x: 0.07, y: 0.88, anchor: "start" }
+  };
+  const anchorAttr = anchor => (anchor === "middle" ? ' text-anchor="middle"' : anchor === "end" ? ' text-anchor="end"' : "");
+  const px = (region, axis) => (axis === "x" ? width : height) * (region?.[axis] ?? 0);
+  const font = escapeXml(typography.fontFamily ?? style.font);
+  const kicker = regions.kicker ?? { x: 0.07, y: 0.18, anchor: "start" };
+  const head = regions.headline ?? { x: 0.07, y: 0.39, anchor: "start" };
+  const sub = regions.subheadline ?? { x: 0.07, y: 0.48, anchor: "start" };
+  const foot = regions.footer ?? { x: 0.07, y: 0.88, anchor: "start" };
+  const footerRightX = width * 0.93;
+  const barX = kicker.anchor === "middle" ? width * 0.46 : px(kicker, "x");
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <defs>${gradient}${treatmentFilter}</defs>
   <g filter="url(#image-treatment)">${image}</g>
   <rect x="0" y="0" width="${width}" height="${height}" fill="url(#shade)"/>
-  <rect x="${width * 0.07}" y="${height * 0.08}" width="${width * 0.08}" height="4" fill="${style.accent}"/>
-  <text x="${width * 0.07}" y="${height * 0.18}" fill="${escapeXml(typography.secondaryColor ?? style.secondary)}" font-family="${escapeXml(typography.fontFamily ?? style.font)}" font-size="${typography.kickerFontSize ?? Math.max(18, width * 0.022)}" font-weight="600" letter-spacing="3">${escapeXml(candidate.subject?.name ?? "视觉海报")}</text>
-  <text x="${width * 0.07}" y="${height * 0.39}" fill="${escapeXml(typography.headlineColor ?? style.text)}" font-family="${escapeXml(typography.fontFamily ?? style.font)}" font-size="${typography.headlineFontSize ?? Math.max(42, width * 0.075)}" font-weight="${typography.fontWeight ?? 700}" letter-spacing="${typography.letterSpacing ?? 0}">${escapeXml(candidate.headline)}</text>
-  <text x="${width * 0.07}" y="${height * 0.48}" fill="${escapeXml(typography.secondaryColor ?? style.secondary)}" font-family="${escapeXml(typography.fontFamily ?? style.font)}" font-size="${typography.subheadlineFontSize ?? Math.max(18, width * 0.025)}" letter-spacing="${Math.max(-0.5, (typography.letterSpacing ?? 0) * 0.4)}">${escapeXml(candidate.subheadline)}</text>
-  <line x1="${width * 0.07}" y1="${height * 0.82}" x2="${width * 0.93}" y2="${height * 0.82}" stroke="${style.secondary}" stroke-opacity="0.5"/>
-  <text x="${width * 0.07}" y="${height * 0.88}" fill="${escapeXml(typography.headlineColor ?? style.text)}" font-family="${escapeXml(typography.fontFamily ?? style.font)}" font-size="${typography.footerFontSize ?? Math.max(18, width * 0.022)}">${escapeXml(candidate.mechanism?.name ?? "创意表达")}</text>
-  <text x="${width * 0.93}" y="${height * 0.88}" text-anchor="end" fill="${escapeXml(typography.accentColor ?? style.accent)}" font-family="${escapeXml(typography.fontFamily ?? style.font)}" font-size="${typography.footerFontSize ?? Math.max(18, width * 0.022)}" font-weight="700">${escapeXml(candidate.cta ?? "了解更多")}</text>
+  <rect x="${barX}" y="${px(kicker, "y") - height * 0.04}" width="${width * 0.08}" height="4" fill="${style.accent}"/>
+  <text x="${px(kicker, "x")}" y="${px(kicker, "y")}"${anchorAttr(kicker.anchor)} fill="${escapeXml(typography.secondaryColor ?? style.secondary)}" font-family="${font}" font-size="${typography.kickerFontSize ?? Math.max(18, width * 0.022)}" font-weight="600" letter-spacing="3">${escapeXml(candidate.subject?.name ?? "视觉海报")}</text>
+  <text x="${px(head, "x")}" y="${px(head, "y")}"${anchorAttr(head.anchor)} fill="${escapeXml(typography.headlineColor ?? style.text)}" font-family="${font}" font-size="${typography.headlineFontSize ?? Math.max(42, width * 0.075)}" font-weight="${typography.fontWeight ?? 700}" letter-spacing="${typography.letterSpacing ?? 0}">${escapeXml(candidate.headline)}</text>
+  <text x="${px(sub, "x")}" y="${px(sub, "y")}"${anchorAttr(sub.anchor)} fill="${escapeXml(typography.secondaryColor ?? style.secondary)}" font-family="${font}" font-size="${typography.subheadlineFontSize ?? Math.max(18, width * 0.025)}" letter-spacing="${Math.max(-0.5, (typography.letterSpacing ?? 0) * 0.4)}">${escapeXml(candidate.subheadline)}</text>
+  <line x1="${width * 0.07}" y1="${px(foot, "y") - height * 0.04}" x2="${width * 0.93}" y2="${px(foot, "y") - height * 0.04}" stroke="${style.secondary}" stroke-opacity="0.5"/>
+  <text x="${width * 0.07}" y="${px(foot, "y")}" fill="${escapeXml(typography.headlineColor ?? style.text)}" font-family="${font}" font-size="${typography.footerFontSize ?? Math.max(18, width * 0.022)}">${escapeXml(candidate.mechanism?.name ?? "创意表达")}</text>
+  <text x="${footerRightX}" y="${px(foot, "y")}" text-anchor="end" fill="${escapeXml(typography.accentColor ?? style.accent)}" font-family="${font}" font-size="${typography.footerFontSize ?? Math.max(18, width * 0.022)}" font-weight="700">${escapeXml(candidate.cta ?? "了解更多")}</text>
 </svg>`;
 }
 

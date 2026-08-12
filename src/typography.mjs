@@ -1,5 +1,10 @@
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
+// WCAG 2.1 contrast thresholds. Large text (>= ~24px bold display) may use the
+// relaxed 3.0 large-text ratio; body/subheadline copy must meet 4.5.
+export const AA_NORMAL = 4.5;
+export const AA_LARGE = 3.0;
+
 export const TYPOGRAPHY_PRESETS = {
   editorial: {
     id: "editorial",
@@ -79,8 +84,12 @@ export function contrastRatio(first, second) {
 
 export function scoreTypographyPlan(plan = {}) {
   let score = 100;
-  if (Number(plan.contrastRatio ?? 0) >= 7) score += 0;
-  else if (Number(plan.contrastRatio ?? 0) >= 4.5) score -= 4;
+  const ratio = Number(plan.contrastRatio ?? 0);
+  // Headline copy is large display type, so the WCAG large-text floor (3.0)
+  // is an acceptable-but-flagged band; subheadline copy still needs 4.5.
+  if (ratio >= 7) score += 0;
+  else if (ratio >= AA_NORMAL) score -= 4;
+  else if (ratio >= AA_LARGE) score -= 12;
   else score -= 25;
   if (Number(plan.headlineLineCount ?? 1) > 2) score -= 18;
   if (Number(plan.headlineLength ?? 0) > Number(plan.maxHeadlineChars ?? 18)) score -= 7;
@@ -115,7 +124,7 @@ function getSafeArea(platformId) {
   return { top: 0.09, right: 0.08, bottom: 0.12, left: 0.08, label: "移动端缩略图安全区" };
 }
 
-export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mechanism = {}, imageFeatures = {}, headline = "", subheadline = "" } = {}) {
+export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mechanism = {}, imageFeatures = {}, headline = "", subheadline = "", composition = null } = {}) {
   const language = input.language === "en" ? "en" : "zh";
   const preset = pickPreset(style.id, mechanism.id);
   const family = language === "en" ? preset.enFamily : preset.zhFamily;
@@ -128,10 +137,16 @@ export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mec
   const lineCount = Math.max(1, Math.ceil(headlineLength / maxHeadlineChars));
   const densityPenalty = headlineLength > maxHeadlineChars ? 0.82 : 1;
   const horizontalPenalty = platform.ratio === "1.91:1" || platform.ratio === "2.35:1" ? 0.78 : 1;
-  const headlineFontSize = clamp(Math.round(shortSide * 0.085 * densityPenalty * horizontalPenalty), 34, 116);
-  const subheadlineFontSize = clamp(Math.round(headlineFontSize * 0.3), 14, 32);
-  const kickerFontSize = clamp(Math.round(headlineFontSize * 0.24), 12, 24);
-  const footerFontSize = clamp(Math.round(headlineFontSize * 0.23), 12, 24);
+  // Modular type scale from the composition (distilled from gdp-gen). The
+  // headline base is modulated by the composition ratio so bolder layouts
+  // (golden-hero, centered-bigtype) legitimately run larger type.
+  const typeScale = composition?.typeScale ?? { headline: 1, subheadline: 0.3 / 0.085, kicker: 0.24 / 0.085, footer: 0.23 / 0.085 };
+  const scaleBoost = clamp(0.9 + (Number(composition?.scaleRatio ?? 1.333) - 1.333) * 0.12, 0.85, 1.12);
+  const headlineFontSize = clamp(Math.round(shortSide * 0.085 * densityPenalty * horizontalPenalty * scaleBoost), 34, 128);
+  const subScaleUnit = headlineFontSize / (typeScale.headline || 1);
+  const subheadlineFontSize = clamp(Math.round(subScaleUnit * (typeScale.subheadline || 1) * 0.42), 14, 34);
+  const kickerFontSize = clamp(Math.round(subScaleUnit * (typeScale.kicker || 1) * 0.34), 12, 26);
+  const footerFontSize = clamp(Math.round(subScaleUnit * (typeScale.footer || 1) * 0.32), 12, 26);
   const letterSpacing = Number((headlineFontSize * preset.tracking).toFixed(1));
   const safeArea = getSafeArea(platform.id);
   const colors = chooseTextColor(style, imageFeatures);
@@ -170,7 +185,8 @@ export function buildTypographyPlan({ input = {}, platform = {}, style = {}, mec
     accentColor: style.accent || "#f6a04d",
     backgroundColor: colors.background,
     contrastRatio: contrast,
-    alignment: "left",
+    passesContrastFloor: contrast >= AA_NORMAL,
+    alignment: composition?.alignment ?? "left",
     maxHeadlineChars,
     headlineLineCount: lineCount,
     safeArea,
@@ -207,6 +223,7 @@ export function refreshTypographyPlan(plan = {}) {
   return {
     ...plan,
     contrastRatio: contrast,
+    passesContrastFloor: contrast >= AA_NORMAL,
     score: scoreTypographyPlan({ ...plan, contrastRatio: contrast }),
     signals,
     rationale: language === "en"
