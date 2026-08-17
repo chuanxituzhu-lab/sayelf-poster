@@ -50,6 +50,7 @@ import {
   deleteOnlineReference,
   ONLINE_LIBRARY_LIMIT
 } from "./online-library.mjs";
+import { APP_VERSION } from "./version.mjs";
 
 const PLATFORM_IDS = Object.keys(PLATFORM_PROFILES);
 
@@ -377,7 +378,7 @@ async function dispatch(name, args = {}) {
 /* --------------------------- server wiring --------------------------- */
 
 const server = new Server(
-  { name: "sayelf-poster", version: "0.7.0" },
+  { name: "sayelf-poster", version: APP_VERSION },
   { capabilities: { tools: {} } }
 );
 
