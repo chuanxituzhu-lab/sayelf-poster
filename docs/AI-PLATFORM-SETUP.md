@@ -14,7 +14,7 @@ Sayelf Poster 提供两种可被 AI 平台调用的接口：
 ## 0. 前置准备
 
 ```bash
-git clone https://github.com/chuanxituzhu-lab/sayelf-poster.git
+git clone --branch main --single-branch https://github.com/chuanxituzhu-lab/sayelf-poster.git
 cd sayelf-poster
 npm install          # 安装 @modelcontextprotocol/sdk
 npm test             # 可选：验证引擎（应为 25 passed）
@@ -22,6 +22,8 @@ node src/mcp-server.mjs   # 手动启动确认，stderr 打印 "MCP server ready
 ```
 
 要求 Node ≥ 20。记下仓库**绝对路径**（下称 `<ABS_PATH>`）。
+
+如本地已有旧 checkout，先执行 `git fetch origin` 和 `git pull --ff-only origin main`，不要从历史分支或旧压缩包启动 WebUI。服务端会对 HTML、JS、CSS 返回 `no-store`，并在资源 URL 上带当前版本号，避免继续引用旧 WebUI。
 
 ## 1. Claude Code
 

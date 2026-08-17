@@ -2,6 +2,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { APP_VERSION } from "./version.mjs";
 import { analyzeInput, applyDesignCommand, evaluateDesign, generateCandidates, inspectDesignContext, renderSvg } from "./core.mjs";
 import { getLearningMemorySummary } from "./learning-memory.mjs";
 import { deleteLibraryItem, getLibraryItem, listLibrary, saveLibraryItem } from "./library.mjs";
@@ -39,7 +40,13 @@ async function serveStatic(req, res) {
   if (!filePath.startsWith(webRoot)) return sendJson(res, 403, { error: "Forbidden" });
   try {
     const body = await fs.readFile(filePath);
-    res.writeHead(200, { "content-type": MIME[path.extname(filePath)] ?? "application/octet-stream" });
+    res.writeHead(200, {
+      "content-type": MIME[path.extname(filePath)] ?? "application/octet-stream",
+      "cache-control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      pragma: "no-cache",
+      expires: "0",
+      "x-sayelf-poster-version": APP_VERSION
+    });
     res.end(body);
   } catch {
     sendJson(res, 404, { error: "Not found" });
@@ -48,7 +55,7 @@ async function serveStatic(req, res) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: "0.7.0" });
+    if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: APP_VERSION });
     if (req.method === "GET" && req.url === "/api/learning-memory") return sendJson(res, 200, getLearningMemorySummary());
     if (req.method === "GET" && req.url === "/api/library") return sendJson(res, 200, await listLibrary());
     if (req.method === "GET" && req.url === "/api/online-library") return sendJson(res, 200, await listOnlineLibrary());
