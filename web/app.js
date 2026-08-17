@@ -1,4 +1,4 @@
-const state = { run: null, selected: null, imageDataUrl: "", imageFeatures: {}, library: null, onlineLibrary: null };
+const state = { run: null, selected: null, imageDataUrl: "", imageFeatures: {}, library: null, onlineLibrary: null, selectionContext: null };
 
 const $ = selector => document.querySelector(selector);
 const form = $("#generate-form");
@@ -34,6 +34,32 @@ function setStatus(message) { $("#status").textContent = message; }
 function updateModeHint() {
   $("#mode-hint").textContent = professionalInput.checked ? "专业模式 · 可编辑标题、文案与设计状态" : "自动模式 · 以直接发布为优先";
   $("#edit-panel").classList.toggle("hidden", !professionalInput.checked || !state.selected);
+}
+
+function renderSessionContext(context = state.selectionContext) {
+  state.selectionContext = context;
+  const selection = context?.selection;
+  if (!selection) {
+    $("#session-selection").textContent = "尚未选择画面元素";
+    $("#session-result").textContent = "";
+  } else {
+    const label = { image: "主视觉图片", headline: "主标题", subheadline: "副标题", cta: "行动入口", kicker: "主题标签", mechanism: "创意机制", shade: "画面遮罩", rule: "强调线", root: "整张海报" }[selection.id] ?? selection.role ?? selection.id;
+    $("#session-selection").textContent = `已选：${label} · ${selection.type} · ${selection.editable ? "可编辑" : "只读"}`;
+  }
+  document.querySelectorAll("[data-node-id]").forEach(node => node.classList.toggle("selected-node", node.dataset.nodeId === selection?.id));
+}
+
+async function inspectPreviewNode(nodeId) {
+  if (!state.selected) return;
+  try {
+    const response = await fetch("/api/design-context", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ candidate: state.selected, nodeId }) });
+    const context = await response.json();
+    if (!response.ok) throw new Error(context.error || "读取画面上下文失败");
+    renderSessionContext(context);
+    setStatus("已反馈选中上下文；画面未修改，请通过会话命令继续");
+  } catch (error) {
+    $("#session-result").textContent = `上下文读取失败：${error.message}`;
+  }
 }
 
 function analyzeImage(file) {
@@ -119,10 +145,18 @@ function renderPreview(candidate) {
   const style = candidate.style;
   const treatment = candidate.imageTreatment ?? TREATMENT_META.original;
   const treatmentId = treatment.id ?? "original";
-  const imageLayer = candidate.image?.dataUrl ? `<div class="poster-image-layer treatment-${escapeHtml(treatmentId)}" style="background-image:url(${candidate.image.dataUrl})"></div>` : "";
-  $("#poster-preview").innerHTML = `<div class="poster-art theme-${escapeHtml(treatmentId)} ${candidate.image?.dataUrl ? "has-image" : ""}" style="--ratio:${candidate.targetPlatform.ratio.replace(":", "/")};--background:${style.background};--surface:${style.surface};--text:${style.text};--accent:${style.accent};--secondary:${style.secondary};">${imageLayer}<div class="poster-shade"></div><div class="poster-copy"><div class="poster-rule"></div><div class="poster-kicker">${escapeHtml(candidate.subject.name)}</div><div class="poster-headline">${escapeHtml(candidate.headline)}</div><div class="poster-sub">${escapeHtml(candidate.subheadline)}</div><div class="poster-footer"><span>${escapeHtml(candidate.mechanism.name)}</span><span class="poster-cta">${escapeHtml(candidate.cta)}</span></div></div></div>`;
+  const imageLayer = candidate.image?.dataUrl ? `<div data-node-id="image" class="poster-image-layer treatment-${escapeHtml(treatmentId)}" style="background-image:url(${candidate.image.dataUrl})"></div>` : "";
+  $("#poster-preview").innerHTML = `<div data-node-id="root" class="poster-art theme-${escapeHtml(treatmentId)} ${candidate.image?.dataUrl ? "has-image" : ""}" style="--ratio:${candidate.targetPlatform.ratio.replace(":", "/")};--background:${style.background};--surface:${style.surface};--text:${style.text};--accent:${style.accent};--secondary:${style.secondary};">${imageLayer}<div data-node-id="shade" class="poster-shade"></div><div class="poster-copy"><div data-node-id="rule" class="poster-rule"></div><div data-node-id="kicker" class="poster-kicker">${escapeHtml(candidate.subject.name)}</div><div data-node-id="headline" class="poster-headline">${escapeHtml(candidate.headline)}</div><div data-node-id="subheadline" class="poster-sub">${escapeHtml(candidate.subheadline)}</div><div class="poster-footer"><span data-node-id="mechanism">${escapeHtml(candidate.mechanism.name)}</span><span data-node-id="cta" class="poster-cta">${escapeHtml(candidate.cta)}</span></div></div></div>`;
   $("#preview-caption").textContent = `${candidate.style.name} / ${candidate.mechanism.name} / ${treatment.name ?? TREATMENT_META[treatmentId]?.name ?? "画面处理"} · ${candidate.rationale}`;
+  renderSessionContext(state.selectionContext);
 }
+
+$("#poster-preview").addEventListener("click", event => {
+  const node = event.target.closest("[data-node-id]");
+  if (!node) return;
+  event.stopPropagation();
+  inspectPreviewNode(node.dataset.nodeId);
+});
 
 function applyTypographyVars(candidate) {
   const typography = candidate.typography ?? {};
@@ -285,6 +319,34 @@ $("#apply-edit").addEventListener("click", async () => {
   state.run.candidates[index] = candidate;
   renderRun();
   setStatus(candidate.evaluation.hardGatePassed ? "修改已应用，质量检查通过" : "修改已应用，但存在需要自动修复的门槛问题");
+});
+
+$("#apply-session-command").addEventListener("click", async () => {
+  if (!state.selected) return setStatus("请先生成一张海报");
+  const text = $("#session-command").value.trim();
+  if (!text) return setStatus("请先输入会话命令");
+  const targetId = state.selectionContext?.selection?.id && state.selectionContext.selection.id !== "root" ? state.selectionContext.selection.id : undefined;
+  const button = $("#apply-session-command");
+  button.disabled = true;
+  $("#session-result").textContent = "正在通过命令门应用并重新评分…";
+  try {
+    const response = await fetch("/api/design-command", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ candidate: state.selected, text, targetId, source: "webui-session" }) });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "设计命令未应用");
+    state.selected = result.candidate;
+    const index = state.run.candidates.findIndex(item => item.id === result.candidate.id);
+    if (index >= 0) state.run.candidates[index] = result.candidate;
+    $("#session-command").value = "";
+    renderRun();
+    renderSessionContext(result.context);
+    $("#session-result").textContent = `已应用：${result.command.type} · ${result.evaluation.hardGatePassed ? "质量门槛通过" : "已更新，仍需优化"}`;
+    setStatus("会话命令已应用，画面已重新评分");
+  } catch (error) {
+    $("#session-result").textContent = `命令未应用：${error.message}`;
+    setStatus("会话命令未应用");
+  } finally {
+    button.disabled = false;
+  }
 });
 
 updateModeHint();

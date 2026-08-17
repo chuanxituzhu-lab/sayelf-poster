@@ -2,7 +2,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyzeInput, evaluateDesign, generateCandidates, renderSvg } from "./core.mjs";
+import { analyzeInput, applyDesignCommand, evaluateDesign, generateCandidates, inspectDesignContext, renderSvg } from "./core.mjs";
 import { getLearningMemorySummary } from "./learning-memory.mjs";
 import { deleteLibraryItem, getLibraryItem, listLibrary, saveLibraryItem } from "./library.mjs";
 import { deleteOnlineReference, listOnlineLibrary, saveOnlineReference, seedAwardReferences } from "./online-library.mjs";
@@ -48,7 +48,7 @@ async function serveStatic(req, res) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: "0.5.0" });
+    if (req.method === "GET" && req.url === "/api/health") return sendJson(res, 200, { ok: true, service: "sayelf-poster", version: "0.7.0" });
     if (req.method === "GET" && req.url === "/api/learning-memory") return sendJson(res, 200, getLearningMemorySummary());
     if (req.method === "GET" && req.url === "/api/library") return sendJson(res, 200, await listLibrary());
     if (req.method === "GET" && req.url === "/api/online-library") return sendJson(res, 200, await listOnlineLibrary());
@@ -80,6 +80,14 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && req.url === "/api/analyze") return sendJson(res, 200, analyzeInput(await readJson(req)));
     if (req.method === "POST" && req.url === "/api/generate") return sendJson(res, 200, generateCandidates(await readJson(req)));
+    if (req.method === "POST" && req.url === "/api/design-context") {
+      const body = await readJson(req);
+      return sendJson(res, 200, inspectDesignContext(body.candidate ?? body, body.nodeId ?? "root"));
+    }
+    if (req.method === "POST" && req.url === "/api/design-command") {
+      const body = await readJson(req);
+      return sendJson(res, 200, applyDesignCommand(body.candidate ?? body, body.command ?? body.text, { targetId: body.targetId, source: body.source ?? "webui-session" }));
+    }
     if (req.method === "POST" && req.url === "/api/evaluate") {
       const body = await readJson(req);
       return sendJson(res, 200, evaluateDesign(body.candidate ?? body, body.input ?? {}));

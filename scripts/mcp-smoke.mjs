@@ -58,6 +58,18 @@ async function run() {
   }, 3));
   console.log("✓ generate_poster: selected", gen.selectedId, "→", gen.savedTo);
 
+  const context = unwrap(await rpc("tools/call", {
+    name: "inspect_design_context",
+    arguments: { file: runFile, nodeId: "headline" }
+  }, 7));
+  console.log("✓ inspect_design_context:", context.selection.id, "→", context.selection.supportedCommands.join("/"));
+
+  const edit = unwrap(await rpc("tools/call", {
+    name: "apply_design_command",
+    arguments: { file: runFile, text: "把字体改成哑金色", targetId: "headline", outFile: runFile, source: "mcp-smoke" }
+  }, 8));
+  console.log("✓ apply_design_command:", edit.command.type, "→", edit.candidate.typography.headlineColor);
+
   const ev = unwrap(await rpc("tools/call", { name: "evaluate_poster", arguments: { file: runFile } }, 4));
   console.log("✓ evaluate_poster: level", ev.level, "publishScore", ev.publishScore);
 

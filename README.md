@@ -1,6 +1,6 @@
 # Sayelf Poster
 
-多语言广告海报的自动生成、平台适配、质量评分、可编辑预览和本地素材库原型。
+多语言广告海报的自动生成、平台适配、质量评分、可编辑场景图、AI 会话控制和本地素材库原型。
 
 当前版本先实现一条可运行的本地垂直切片：
 
@@ -14,7 +14,7 @@
   → 国际 / 中国广告奖项启发式对标
   → 20 张本地素材库 + 三类候选归档
   → 负熵记录：把结果、机制、评分和下一步调整沉淀为可复用记忆
-  → WebUI 预览 / SVG 导出
+  → 可编辑场景图 / WebUI 预览 / SVG 导出
 ```
 
 ## 启动 WebUI
@@ -34,10 +34,9 @@ WebUI 默认采用自动模式，专业模式可编辑主标题、副标题和�
 系统封装了统一的技能接口，便于 Codex、Claude Code、WorkBuddy 等 AI 平台安装调用，
 底层与 CLI、WebUI 共用同一个无 API、确定性的引擎。
 
-- **MCP 服务器（推荐）**：`node src/mcp-server.mjs`（stdio 传输），暴露
-  `generate_poster / evaluate_poster / render_poster / list_compositions /
-  list_platforms / list_capabilities / get_award_memory / library_list /
-  library_save / library_delete` 共 10 个结构化工具。
+- **MCP 服务器（推荐）**：`node src/mcp-server.mjs`（stdio 传输），暴露生成、评分、渲染、
+  `inspect_design_context`（只读选中上下文）和 `apply_design_command`（唯一修改入口），
+  以及素材库、奖项学习记忆等结构化工具。
 - **CLI 回退**：`node src/cli.mjs …`，适合无 MCP 的平台或脚本步骤。
 - **Skill 发现**：仓库根目录的 `SKILL.md` 供 Claude 系平台自动识别能力；
   `.mcp.json.example` 为可直接复制的 Claude Code 配置。
@@ -46,7 +45,7 @@ WebUI 默认采用自动模式，专业模式可编辑主标题、副标题和�
 
 ```bash
 npm install
-npm test               # 引擎回归（17 passed）
+npm test               # 引擎回归
 node scripts/mcp-smoke.mjs   # MCP 端到端冒烟
 ```
 
@@ -103,6 +102,16 @@ npm test
 - 同一轮三个候选获得不同构图，既保持差异又稳定可复现。运行 `node src/cli.mjs compositions` 查看全部构图。
 
 对比度阈值同步对齐 WCAG：大号展示型标题可落在大文本 3.0 的可读区间并参与创意/奖项打分，但自动发布硬门槛仍要求正文/副标题达到 4.5（AA_NORMAL）。
+
+## Canva 机制融合（v0.7）
+
+系统吸收 GitHub 上开源设计编辑器的可迁移机制，但不复制 Canva 私有实现、代码或作品：
+
+- `src/scene-graph.mjs` 为每张海报建立语义节点：图片、遮罩、强调线、标题、副标题、机制标签和行动入口。
+- WebUI 点击节点只产生选中上下文，不会直接改图；会话栏或 MCP 的 `apply_design_command` 才能修改。
+- 文字、字体颜色、字号、字距、画面处理、增删元素和对齐方式均通过安全命令更新，然后重新评分并重建场景图。
+- `editHistory` 保留最近 20 次结构化操作，为后续 Codex、Claude Code、WorkBuddy 协作和递归进化提供操作记录。
+- 当前仍以本地规则和 SVG 为基础；未来可在不改变设计数据、评分引擎和命令协议的前提下接入 Fabric.js、图像模型或协作服务。
 
 ## License
 

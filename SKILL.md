@@ -41,6 +41,8 @@ Codex, and WorkBuddy config snippets). Tools exposed:
 | `generate_poster` | 3 scored candidates from a prompt; can write full run to `outFile`. |
 | `evaluate_poster` | Re-score a saved run/candidate (gates, publish/creative, award bridge). |
 | `render_poster` | Render a candidate to SVG (returns markup and/or writes a file). |
+| `inspect_design_context` | Read-only inspection of the semantic node selected in the WebUI. |
+| `apply_design_command` | Apply an allow-listed text/typography/image/layout command, re-score, and rebuild the scene graph. |
 | `list_compositions` / `list_platforms` | Enumerate named layouts / platform specs. |
 | `get_award_memory` | Award-learning memory, optionally matched to a query. |
 | `library_list` / `library_save` / `library_delete` | Manage the 20-slot material library. |
@@ -48,6 +50,11 @@ Codex, and WorkBuddy config snippets). Tools exposed:
 Typical flow: `generate_poster {prompt, platform, outFile}` →
 `evaluate_poster {file}` → `render_poster {file, outFile}` →
 `library_save {file, classification}`.
+
+For interactive editing, use `inspect_design_context` after a WebUI selection and
+then `apply_design_command`. Selection is read-only; only the command tool mutates
+the candidate. Natural-language commands such as “把字体改成哑金色” are parsed
+locally when no external AI platform is connected.
 
 ### B. CLI (fallback / scripting / WorkBuddy shell steps)
 
