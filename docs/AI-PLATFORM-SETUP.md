@@ -2,10 +2,14 @@
 
 Sayelf Poster 提供两种可被 AI 平台调用的接口：
 
-- **MCP 服务器**（推荐）：`src/mcp-server.mjs`，stdio 传输，暴露 10 个结构化工具。
+- **MCP 服务器**（推荐）：`src/mcp-server.mjs`，stdio 传输，暴露生成、评分、渲染、素材库、奖项记忆和场景图命令等 16 个结构化工具。
 - **CLI**（回退/脚本）：`src/cli.mjs`，适合无 MCP 的平台或 Shell 步骤。
 
 二者共用同一个无 API、可解释、确定性的引擎。
+
+交互式编辑遵循“点击只读、命令修改”：WebUI 点击后由 `inspect_design_context` 返回节点上下文，
+再由 `apply_design_command` 执行标题、字体、字距、画面处理、增删元素或对齐命令。没有外部 AI
+平台时，WebUI 会用本地规则解析中文命令；接入 Codex、Claude Code 或 WorkBuddy 后，可直接发送结构化命令。
 
 ## 0. 前置准备
 
@@ -13,7 +17,7 @@ Sayelf Poster 提供两种可被 AI 平台调用的接口：
 git clone https://github.com/chuanxituzhu-lab/sayelf-poster.git
 cd sayelf-poster
 npm install          # 安装 @modelcontextprotocol/sdk
-npm test             # 可选：验证引擎（应为 17 passed）
+npm test             # 可选：验证引擎（应为 25 passed）
 node src/mcp-server.mjs   # 手动启动确认，stderr 打印 "MCP server ready (stdio)"
 ```
 

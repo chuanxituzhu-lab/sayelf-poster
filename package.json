@@ -1,6 +1,6 @@
 {
   "name": "sayelf-poster",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "多语言广告海报自动生成、平台适配、素材库与负熵递归进化工作流",

@@ -10,7 +10,7 @@
     <main class="workspace">
       <aside class="sidebar left-panel">
         <div class="brand-mark"><span></span> SAYELF POSTER</div>
-    <div class="eyebrow">AUTOMATIC CREATIVE STUDIO · V0.5</div>
+    <div class="eyebrow">AUTOMATIC CREATIVE STUDIO · V0.7</div>
         <h1>把内容，变成<br /><em>可发布的海报。</em></h1>
         <p class="intro">上传图片或直接描述想法。系统会自动识别内容、匹配创意机制，并筛选出可以直接使用的方案。</p>
 
@@ -153,6 +153,16 @@
           <label class="mini-label" for="edit-letter-spacing">标题字距 <output id="edit-letter-spacing-value">—</output></label>
           <input id="edit-letter-spacing" type="range" min="-6" max="8" step="0.1" value="-2" />
           <button id="apply-edit" class="secondary-button full">重新评分并更新预览</button>
+        </div>
+
+        <div id="session-panel" class="session-panel">
+          <div class="section-divider"></div>
+          <div class="review-heading"><span>AI SESSION CONTROL</span><strong>COMMAND ONLY</strong></div>
+          <p class="session-note">点击画面只反馈选中上下文，不会直接改图。只有会话命令会修改海报。</p>
+          <div id="session-selection" class="session-selection">尚未选择画面元素</div>
+          <textarea id="session-command" rows="3" placeholder="例如：把字体改成哑金色；把标题改成“住进风景里”；画面改成线描风格"></textarea>
+          <button id="apply-session-command" class="secondary-button full">通过会话命令应用</button>
+          <div id="session-result" class="session-result" aria-live="polite"></div>
         </div>
 
         <div class="library-panel">

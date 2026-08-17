@@ -24,7 +24,9 @@ import {
 
 import {
   generateCandidates,
+  applyDesignCommand,
   evaluateDesign,
+  inspectDesignContext,
   renderSvg,
   summarizeRun,
   listCompositions,
@@ -131,6 +133,34 @@ const TOOLS = [
         includeMarkup: { type: "boolean", description: "Include the SVG string in the response.", default: true }
       },
       required: ["file"]
+    }
+  },
+  {
+    name: "inspect_design_context",
+    description: "Inspect a semantic poster node after a WebUI click. Read-only: returns the selected node, bounds, style, and allowed commands without changing the design.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: "Path to a run.json or candidate JSON." },
+        candidate: { type: "object", description: "Inline candidate JSON when no file is used." },
+        nodeId: { type: "string", description: "Semantic node id: image, headline, subheadline, cta, rule, shade, or root.", default: "root" }
+      }
+    }
+  },
+  {
+    name: "apply_design_command",
+    description: "Apply one safe semantic design command to a poster candidate, re-score it, rebuild its scene graph, and optionally persist the updated candidate. Click context is read-only; this tool is the mutation gate.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: { type: "string", description: "Path to a run.json or candidate JSON." },
+        candidate: { type: "object", description: "Inline candidate JSON when no file is used." },
+        targetId: { type: "string", description: "Target node id when the command does not include one." },
+        command: { type: "object", description: "Structured command, for example {type:'set_text',targetId:'headline',value:'新标题'} or {type:'set_image_treatment',treatmentId:'line_art'}." },
+        text: { type: "string", description: "Optional natural-language command, for example '把字体改成哑金色' or '画面改成线描风格'." },
+        source: { type: "string", description: "Calling platform or session label." },
+        outFile: { type: "string", description: "Optional path to write the updated candidate JSON." }
+      }
     }
   },
   {
@@ -272,6 +302,25 @@ async function handleRender(args) {
   });
 }
 
+async function readInlineOrFile(args) {
+  if (args.file) return (await readRunOrCandidate(args.file)).candidate;
+  if (args.candidate && typeof args.candidate === "object") return args.candidate;
+  throw new Error("需要提供 file 或 candidate");
+}
+
+async function handleDesignContext(args) {
+  const candidate = await readInlineOrFile(args);
+  return jsonContent(inspectDesignContext(candidate, args.nodeId ?? "root"));
+}
+
+async function handleDesignCommand(args) {
+  const candidate = await readInlineOrFile(args);
+  const result = applyDesignCommand(candidate, args.command ?? args.text, { targetId: args.targetId, source: args.source ?? "mcp" });
+  let savedTo;
+  if (args.outFile) savedTo = await writeJson(args.outFile, result.candidate);
+  return jsonContent({ ...result, savedTo });
+}
+
 async function handleLibrarySave(args) {
   const { candidate } = await readRunOrCandidate(args.file);
   const previewSvg = args.withPreview !== false ? renderSvg(candidate) : undefined;
@@ -301,6 +350,8 @@ async function dispatch(name, args = {}) {
     case "generate_poster": return handleGenerate(args);
     case "evaluate_poster": return handleEvaluate(args);
     case "render_poster": return handleRender(args);
+    case "inspect_design_context": return handleDesignContext(args);
+    case "apply_design_command": return handleDesignCommand(args);
     case "list_compositions": return jsonContent(listCompositions());
     case "list_platforms": return jsonContent(capabilities().platforms);
     case "list_capabilities": return jsonContent(capabilities());
@@ -326,7 +377,7 @@ async function dispatch(name, args = {}) {
 /* --------------------------- server wiring --------------------------- */
 
 const server = new Server(
-  { name: "sayelf-poster", version: "0.6.0" },
+  { name: "sayelf-poster", version: "0.7.0" },
   { capabilities: { tools: {} } }
 );
 

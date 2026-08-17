@@ -1,9 +1,10 @@
 import crypto from "node:crypto";
 import { AWARD_LEARNING_MEMORY, getLearningMatches, getLearningMemorySummary } from "./learning-memory.mjs";
-import { buildTypographyPlan, refreshTypographyPlan } from "./typography.mjs";
+import { buildTypographyPlan, refreshTypographyPlan, MATTE_GOLD } from "./typography.mjs";
 import { buildCompositionPlan, listCompositions } from "./composition.mjs";
+import { buildSceneGraph, inspectSceneContext } from "./scene-graph.mjs";
 
-export { listCompositions };
+export { listCompositions, buildSceneGraph, inspectSceneContext, inspectSceneContext as inspectDesignContext };
 
 export const PLATFORM_PROFILES = {
   xhs_cover: {
@@ -579,7 +580,7 @@ function makeCandidate(input, analysis, index) {
   const id = `poster-${hash([input.prompt, input.platform, style.id, mechanism.id, index].join("|"))}`;
   const candidate = {
     id,
-    version: "0.6",
+    version: "0.7",
     language: input.language,
     subject: analysis.subject,
     targetPlatform: analysis.platform,
@@ -641,7 +642,10 @@ function makeCandidate(input, analysis, index) {
     },
     rationale: `${style.copy} ${mechanism.description}`
   };
+  candidate.sceneGraph = buildSceneGraph(candidate);
   candidate.evaluation = evaluateDesign(candidate, input);
+  candidate.typography = candidate.evaluation.typography ?? candidate.typography;
+  candidate.sceneGraph = buildSceneGraph(candidate);
   return candidate;
 }
 
@@ -762,12 +766,188 @@ export function generateCandidates(rawInput = {}) {
     return publishDelta || b.evaluation.total - a.evaluation.total;
   });
   return {
-    specVersion: "0.6",
+    specVersion: "0.7",
     generatedAt: new Date().toISOString(),
     input,
     analysis,
     selectedId: candidates[0]?.id,
     candidates
+  };
+}
+
+const COLOR_ALIASES = {
+  "哑金": MATTE_GOLD,
+  "哑金色": MATTE_GOLD,
+  "磨砂金": MATTE_GOLD,
+  "matte gold": MATTE_GOLD,
+  "白色": "#ffffff",
+  "黑色": "#111111"
+};
+
+function commandColor(text) {
+  const hex = String(text).match(/#[0-9a-f]{6}\b/i)?.[0];
+  if (hex) return hex;
+  const alias = Object.keys(COLOR_ALIASES).find(key => String(text).toLowerCase().includes(key.toLowerCase()));
+  return alias ? COLOR_ALIASES[alias] : null;
+}
+
+function commandValue(text, pattern) {
+  const match = String(text).match(pattern);
+  return match?.[1]?.replace(/[“”"「」].*$/u, "").replace(/[。！!；;]+$/u, "").trim() ?? "";
+}
+
+/**
+ * Convert a short natural-language instruction into the safe command shape
+ * consumed by applyDesignCommand. External AI clients may skip this parser and
+ * send the structured command directly.
+ */
+export function parseDesignCommand(rawCommand = {}, context = {}) {
+  if (rawCommand && typeof rawCommand === "object" && !Array.isArray(rawCommand)) return { ...rawCommand };
+  const text = cleanText(rawCommand);
+  const selectedId = context.selection?.id && context.selection.id !== "root" ? context.selection.id : "headline";
+  if (!text) throw new Error("设计命令不能为空");
+
+  const textTarget = /副标题|subheadline/i.test(text) ? "subheadline" : /行动入口|按钮|cta/i.test(text) ? "cta" : "headline";
+  const copy = commandValue(text, /(?:主标题|标题|副标题|行动入口|按钮|headline|subheadline|cta).*?(?:改为|改成|修改为|换成|设置为)\s*[“"「]?(.+?)\s*[”"」]?$/iu);
+  if (copy) return { type: "set_text", targetId: textTarget, value: copy };
+
+  const color = commandColor(text);
+  if (color && /字体|文字|颜色|色彩|哑金|matte gold/i.test(text)) {
+    return {
+      type: "set_typography",
+      targetId: selectedId,
+      patch: { headlineColor: color, secondaryColor: color, accentColor: color },
+      rationale: color === MATTE_GOLD ? "将所有可见文字统一为哑金色" : "更新可见文字颜色"
+    };
+  }
+
+  const fontSize = text.match(/(?:字号|字体大小|font size)\s*(?:改为|改成|设置为|为)?\s*(\d{2,3})\s*(?:px|像素)?/iu)?.[1];
+  if (fontSize) return { type: "set_typography", targetId: selectedId, patch: { headlineFontSize: Number(fontSize) } };
+
+  const letterSpacing = text.match(/(?:字距|字间距|letter spacing)\s*(?:改为|改成|设置为|为)?\s*(-?\d+(?:\.\d+)?)\s*(?:px|像素)?/iu)?.[1];
+  if (letterSpacing) return { type: "set_typography", targetId: selectedId, patch: { letterSpacing: Number(letterSpacing) } };
+
+  const treatmentMap = [
+    ["线描", "line_art"], ["线稿", "line_art"], ["漫画", "comic"], ["动漫", "comic"],
+    ["简笔", "simple_illustration"], ["插画", "simple_illustration"], ["黑白", "monochrome"],
+    ["单色", "monochrome"], ["双色", "duotone"], ["双调", "duotone"], ["电影级", "cinematic"],
+    ["广告大片", "cinematic"], ["主体增强", "enhance"], ["原图", "original"]
+  ];
+  const treatment = treatmentMap.find(([label]) => text.includes(label));
+  if (treatment && /画面|图片|图像|风格|调色|处理|改成|变成/.test(text)) {
+    return { type: "set_image_treatment", treatmentId: treatment[1] };
+  }
+
+  const remove = commandValue(text, /(?:移除|删除|去掉|remove)\s*[：:]?\s*(.+)$/iu);
+  if (remove) return { type: "set_image_edit_plan", remove: remove.split(/[，,、]/).map(cleanText).filter(Boolean) };
+  const add = commandValue(text, /(?:增加|添加|加入|补充|add)\s*[：:]?\s*(.+)$/iu);
+  if (add) return { type: "set_image_edit_plan", add: add.split(/[，,、]/).map(cleanText).filter(Boolean) };
+
+  if (/居中|center/i.test(text)) return { type: "set_layout", patch: { alignment: "center" } };
+  if (/左对齐|左侧|left/i.test(text)) return { type: "set_layout", patch: { alignment: "left" } };
+  if (/右对齐|右侧|right/i.test(text)) return { type: "set_layout", patch: { alignment: "right" } };
+  throw new Error(`暂不支持这条自然语言设计命令：${text}`);
+}
+
+function normalizeCommandPatch(patch = {}) {
+  const allowed = ["preset", "presetName", "fontFamily", "fontWeight", "headlineFontSize", "letterSpacing", "headlineColor", "secondaryColor", "accentColor", "lineHeight", "alignment"];
+  const normalized = Object.fromEntries(allowed.filter(key => patch[key] !== undefined).map(key => [key, patch[key]]));
+  for (const key of ["headlineColor", "secondaryColor", "accentColor"]) {
+    if (normalized[key] !== undefined) {
+      const color = commandColor(normalized[key]);
+      if (!color) throw new Error(`${key} 必须是六位十六进制颜色或受支持的颜色名称`);
+      normalized[key] = color;
+    }
+  }
+  const bounded = (value, min, max, label) => {
+    const number = Number(value);
+    if (!Number.isFinite(number)) throw new Error(`${label} 必须是数字`);
+    return Math.min(max, Math.max(min, number));
+  };
+  if (normalized.headlineFontSize !== undefined) normalized.headlineFontSize = bounded(normalized.headlineFontSize, 24, 160, "字号");
+  if (normalized.letterSpacing !== undefined) normalized.letterSpacing = bounded(normalized.letterSpacing, -8, 12, "字距");
+  if (normalized.fontWeight !== undefined) normalized.fontWeight = bounded(normalized.fontWeight, 100, 900, "字重");
+  if (normalized.lineHeight !== undefined) normalized.lineHeight = bounded(normalized.lineHeight, 0.7, 1.6, "行高");
+  if (normalized.fontFamily !== undefined) normalized.fontFamily = cleanText(normalized.fontFamily).replace(/[;{}]/g, "").slice(0, 180);
+  return normalized;
+}
+
+function updateLayout(candidate, alignment) {
+  if (!["left", "center", "right"].includes(alignment)) throw new Error("布局对齐方式只能是 left、center 或 right");
+  const composition = structuredClone(candidate.composition ?? {});
+  const regions = structuredClone(composition.regions ?? candidate.layout?.regions ?? {});
+  const x = alignment === "center" ? 0.5 : alignment === "right" ? 0.93 : 0.07;
+  for (const key of ["kicker", "headline", "subheadline"]) regions[key] = { ...(regions[key] ?? {}), x, anchor: alignment === "center" ? "middle" : alignment === "right" ? "end" : "start" };
+  composition.alignment = alignment;
+  composition.regions = regions;
+  candidate.composition = composition;
+  candidate.layout = { ...(candidate.layout ?? {}), alignment, regions };
+}
+
+/**
+ * Apply only allow-listed, semantic design commands. This is the mutation gate
+ * for the WebUI session bar and Codex/Claude Code/WorkBuddy integrations.
+ */
+export function applyDesignCommand(candidate = {}, rawCommand = {}, options = {}) {
+  const context = inspectSceneContext(candidate, options.targetId ?? rawCommand?.targetId ?? "root");
+  const command = parseDesignCommand(rawCommand, context);
+  const updated = structuredClone(candidate);
+  const targetId = command.targetId ?? context.selection.id;
+
+  switch (command.type) {
+    case "set_text": {
+      if (!["headline", "subheadline", "cta"].includes(targetId)) throw new Error("文字命令只能修改主标题、副标题或行动入口");
+      updated[targetId] = cleanText(command.value);
+      if (!updated[targetId]) throw new Error("文字内容不能为空");
+      break;
+    }
+    case "set_typography": {
+      const patch = normalizeCommandPatch(command.patch);
+      if (!Object.keys(patch).length) throw new Error("没有可应用的字体或排版属性");
+      updated.typography = { ...(updated.typography ?? {}), ...patch, automatic: false };
+      break;
+    }
+    case "set_image_treatment": {
+      const treatment = IMAGE_TREATMENTS[command.treatmentId];
+      if (!treatment) throw new Error(`未知画面处理方式：${command.treatmentId}`);
+      updated.imageTreatment = { ...treatment, automatic: false };
+      updated.imageEditPlan = { ...(updated.imageEditPlan ?? {}), transform: { ...treatment, automatic: false }, operations: treatment.operations };
+      break;
+    }
+    case "set_image_edit_plan": {
+      const plan = updated.imageEditPlan ?? {};
+      if (command.add !== undefined) plan.add = Array.isArray(command.add) ? command.add.map(cleanText).filter(Boolean) : [cleanText(command.add)].filter(Boolean);
+      if (command.remove !== undefined) plan.remove = Array.isArray(command.remove) ? command.remove.map(cleanText).filter(Boolean) : [cleanText(command.remove)].filter(Boolean);
+      updated.imageEditPlan = plan;
+      break;
+    }
+    case "set_layout":
+      updateLayout(updated, command.patch?.alignment ?? command.alignment);
+      break;
+    case "set_style": {
+      const color = commandColor(command.patch?.color ?? command.patch?.fill);
+      if (!color) throw new Error("样式命令目前需要提供 color 或 fill");
+      updated.typography = { ...(updated.typography ?? {}), headlineColor: color, secondaryColor: color, accentColor: color, automatic: false };
+      break;
+    }
+    default:
+      throw new Error(`不允许的设计命令类型：${command.type}`);
+  }
+
+  updated.evaluation = evaluateDesign(updated, { language: updated.language });
+  updated.typography = updated.evaluation.typography ?? updated.typography;
+  updated.sceneGraph = buildSceneGraph(updated);
+  updated.editHistory = [...(updated.editHistory ?? []), {
+    type: command.type,
+    targetId,
+    source: options.source ?? "design-command",
+    command
+  }].slice(-20);
+  return {
+    candidate: updated,
+    command,
+    context: inspectSceneContext(updated, targetId),
+    evaluation: updated.evaluation
   };
 }
 
