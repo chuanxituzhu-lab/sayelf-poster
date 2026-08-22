@@ -8,6 +8,50 @@ const platformInput = $("#platform");
 const toneInput = $("#tone");
 const languageInput = $("#language");
 const professionalInput = $("#professional");
+const PLUGIN_CONNECTIONS = {
+  local: {
+    text: "npm start",
+    message: "本地规则引擎已启用：无需外部 AI，也可以完成生成、评分、渲染与会话命令。"
+  },
+  codex: {
+    text: "[mcp_servers.sayelf-poster]\ncommand = \"node\"\nargs = [\"<ABS_PATH>/src/mcp-server.mjs\"]",
+    message: "Codex MCP 配置已复制。将 <ABS_PATH> 替换为仓库绝对路径后即可接入。"
+  },
+  claude: {
+    text: "claude mcp add sayelf-poster -- node <ABS_PATH>/src/mcp-server.mjs",
+    message: "Claude Code 接入命令已复制。将 <ABS_PATH> 替换为仓库绝对路径后执行。"
+  },
+  workbuddy: {
+    text: "{\n  \"mcpServers\": {\n    \"sayelf-poster\": {\n      \"command\": \"node\",\n      \"args\": [\"<ABS_PATH>/src/mcp-server.mjs\"]\n    }\n  }\n}",
+    message: "WorkBuddy MCP 配置已复制。也可以使用同目录下的 CLI 作为回退接口。"
+  },
+  canva: {
+    message: "Canva 适合做生成后的专业编辑与协作。当前建议先走 SVG / PNG / PDF 交接，再回传 Sayelf 重新评分。"
+  },
+  figma: {
+    message: "Figma 适合做设计系统、视觉审查与结构同步。场景图和质量评分仍以 Sayelf 为主。"
+  }
+};
+
+const pluginHub = $("#plugin-hub");
+const pluginHubResult = $("#plugin-hub-result");
+$("#plugin-hub-trigger")?.addEventListener("click", () => pluginHub?.showModal());
+pluginHub?.addEventListener("click", event => { if (event.target === pluginHub) pluginHub.close(); });
+document.querySelectorAll("[data-plugin-copy]").forEach(button => button.addEventListener("click", async () => {
+  const connection = PLUGIN_CONNECTIONS[button.dataset.pluginCopy];
+  if (!connection) return;
+  if (connection.text) {
+    try {
+      await navigator.clipboard.writeText(connection.text);
+      pluginHubResult.textContent = `${connection.message} 已复制到剪贴板。`;
+    } catch {
+      pluginHubResult.textContent = `${connection.message} 浏览器未允许自动复制，请从安装指南中手动复制。`;
+    }
+  } else {
+    pluginHubResult.textContent = connection.message;
+  }
+}));
+
 const TREATMENT_META = {
   original: { name: "保留原图", description: "保留摄影质感，只优化明暗与文字安全区。", operations: ["保留主体", "微调明暗", "预留安全区"] },
   enhance: { name: "主体增强", description: "增强主体与背景层次，让缩略图更醒目。", operations: ["提升对比", "压低干扰", "强化焦点"] },

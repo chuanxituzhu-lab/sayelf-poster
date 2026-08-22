@@ -3,15 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="sayelf-poster-version" content="0.7.1" />
+    <meta name="sayelf-poster-version" content="0.7.2" />
     <title>Sayelf Poster · 智能出片</title>
-    <link rel="stylesheet" href="/styles.css?v=0.7.1" />
+    <link rel="stylesheet" href="/styles.css?v=0.7.2" />
   </head>
   <body>
     <main class="workspace">
       <aside class="sidebar left-panel">
-        <div class="brand-mark"><span></span> SAYELF POSTER</div>
-    <div class="eyebrow">AUTOMATIC CREATIVE STUDIO · V0.7.1</div>
+        <div class="brand-row">
+          <div class="brand-mark"><span></span> SAYELF POSTER</div>
+          <button id="plugin-hub-trigger" class="plugin-trigger" type="button" aria-haspopup="dialog" aria-controls="plugin-hub"><span>✦</span> 插件</button>
+        </div>
+        <div class="eyebrow">AUTOMATIC CREATIVE STUDIO · V0.7.2</div>
         <h1>把内容，变成<br /><em>可发布的海报。</em></h1>
         <p class="intro">上传图片或直接描述想法。系统会自动识别内容、匹配创意机制，并筛选出可以直接使用的方案。</p>
 
@@ -190,6 +193,47 @@
         </div>
       </aside>
     </main>
-    <script type="module" src="/app.js?v=0.7.1"></script>
+    <dialog id="plugin-hub" class="plugin-hub" aria-labelledby="plugin-hub-title">
+      <form method="dialog" class="plugin-hub-shell">
+        <div class="plugin-hub-head">
+          <div>
+            <div class="eyebrow">CONNECTOR CONTROL</div>
+            <h2 id="plugin-hub-title">插件接入中心</h2>
+            <p>接入外部 AI 或设计工具，自动出片仍由 Sayelf Poster 的质量引擎守门。</p>
+          </div>
+          <button class="plugin-close" type="submit" value="close" aria-label="关闭插件接入中心">×</button>
+        </div>
+        <div class="plugin-policy"><span></span><strong>平台自动探测 + 本地规则降级</strong><small>第三方不可用时不影响本地生成</small></div>
+        <div class="plugin-grid">
+          <article class="plugin-card plugin-card-active">
+            <div class="plugin-icon">◎</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>本地规则引擎</strong><span class="plugin-status status-active">已启用</span></div><p>无需 API，负责生成、评分、渲染和会话命令降级。</p><button class="plugin-action" type="button" data-plugin-copy="local">复制本地启动命令</button></div>
+          </article>
+          <article class="plugin-card">
+            <div class="plugin-icon plugin-icon-gold">⌘</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>Codex</strong><span class="plugin-status">MCP 接入</span></div><p>通过会话栏控制场景图、字体、图片处理和质量复评。</p><button class="plugin-action" type="button" data-plugin-copy="codex">复制 MCP 配置</button></div>
+          </article>
+          <article class="plugin-card">
+            <div class="plugin-icon plugin-icon-purple">◇</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>Claude Code</strong><span class="plugin-status">MCP / CLI</span></div><p>支持结构化工具调用，也可回退到 CLI 工作流。</p><button class="plugin-action" type="button" data-plugin-copy="claude">复制接入命令</button></div>
+          </article>
+          <article class="plugin-card">
+            <div class="plugin-icon plugin-icon-blue">◌</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>WorkBuddy</strong><span class="plugin-status">MCP / CLI</span></div><p>适合批量生成、评估、渲染和素材归档。</p><button class="plugin-action" type="button" data-plugin-copy="workbuddy">复制 MCP 配置</button></div>
+          </article>
+          <article class="plugin-card plugin-card-planned">
+            <div class="plugin-icon plugin-icon-teal">▱</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>Canva</strong><span class="plugin-status status-planned">适配中</span></div><p>计划支持设计交接、素材同步和导出，不绕过本地质量评分。</p><button class="plugin-action" type="button" data-plugin-copy="canva">查看接入边界</button></div>
+          </article>
+          <article class="plugin-card plugin-card-planned">
+            <div class="plugin-icon plugin-icon-blue">△</div>
+            <div class="plugin-card-body"><div class="plugin-card-top"><strong>Figma</strong><span class="plugin-status status-planned">视觉参考</span></div><p>用于设计系统、视觉审查和页面结构同步。</p><button class="plugin-action" type="button" data-plugin-copy="figma">查看接入边界</button></div>
+          </article>
+        </div>
+        <div id="plugin-hub-result" class="plugin-hub-result" aria-live="polite">选择一个接入方式即可复制配置或查看说明。</div>
+        <div class="plugin-hub-foot"><span>当前核心版本 V0.7.2</span><span>场景图与质量引擎始终保留在本地</span></div>
+      </form>
+    </dialog>
+    <script type="module" src="/app.js?v=0.7.2"></script>
   </body>
 </html>
